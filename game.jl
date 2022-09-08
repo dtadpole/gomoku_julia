@@ -31,7 +31,7 @@ mutable struct Game
         g.size = () -> g._size
 
         """State"""
-        g.state = () -> g._board
+        g.state = () -> g._board * sign(g._turn)
 
         """Turn"""
         g.turn = () -> g._turn
@@ -110,9 +110,9 @@ mutable struct Game
         """Return the score of the game."""
         g.score = () -> begin
             if g.has_won()
-                return -g._turn
+                return -sign(g._turn)
             else
-                return 0.0
+                return Float32(0.0)
             end
         end
 

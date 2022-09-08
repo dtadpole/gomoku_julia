@@ -49,14 +49,14 @@ mutable struct Model
         m._conv1 = Conv((3, 3), 1 => channels, relu; pad=(1, 1), bias=false)
         m._conv2 = Conv((3, 3), channels => channels * 2, relu; pad=(1, 1), bias=false)
         m._conv3 = Conv((3, 3), channels * 2 => channels * 4, relu; pad=(1, 1), bias=false)
-        m._conv4 = Conv((3, 3), channels * 4 => channels * 8, relu; pad=(1, 1), bias=false)
+        m._conv4 = Conv((3, 3), channels * 4 => channels * 4, relu; pad=(1, 1), bias=false)
 
         """Policy network"""
-        m._pc = Conv((1, 1), channels * 8 => div(channels, 2), relu; bias=false)
+        m._pc = Conv((1, 1), channels * 4 => div(channels, 2), relu)
         m._p1 = Dense(div(channels, 2) * m._size * m._size => size * size, relu)
 
         """Value network"""
-        m._vc = Conv((1, 1), channels * 8 => div(channels, 2), relu; bias=false)
+        m._vc = Conv((1, 1), channels * 4 => div(channels, 2), relu)
         m._v1 = Dense(div(channels, 2) * m._size * m._size => channels * 2, relu)
         m._v2 = Dense(channels * 2 => 1, tanh)
 
@@ -64,10 +64,10 @@ mutable struct Model
         m.forward = (x) -> begin
             conv = m._conv4(m._conv3(m._conv2(m._conv1(x))))
             pc = reshape(m._pc(conv), (div(channels, 2) * m._size * m._size, :))
-            p = softmax(m._p1(pc))
+            pi = softmax(m._p1(pc))
             vc = reshape(m._vc(conv), (div(channels, 2) * m._size * m._size, :))
             v = m._v2(m._v1(vc))
-            return p, v
+            return pi, v
         end
 
         """Save"""
@@ -122,9 +122,9 @@ function _play_model(model::Model)
             state = -game.state()
         end
         # get action
-        p, _ = model.forward(reshape(state, (model.size(), model.size(), 1, 1)))
+        pi, _ = model.forward(reshape(state, (model.size(), model.size(), 1, 1)))
         available_actions = game.available_actions()
-        distribution = reshape(p, (model.size() * model.size())) .* available_actions
+        distribution = reshape(pi, model.size()^2) .* available_actions
         action = sample(1:model.size()^2, ProbabilityWeights(distribution))
         # play action
         game.play_action(action)
