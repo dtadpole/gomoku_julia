@@ -5,9 +5,11 @@ using BSON: @save, @load
 using StatsBase
 
 mutable struct Model
+
     # attributes
     _size::Int
     _channels::Int
+
     # conv layers
     _conv1::Conv
     _conv2::Conv
@@ -20,6 +22,7 @@ mutable struct Model
     _vc::Conv
     _v1::Dense
     _v2::Dense
+
     # functions
     size::Function
     channels::Function
@@ -30,8 +33,6 @@ mutable struct Model
     save::Function
     load::Function
     clone::Function
-    # P::Function
-    # V::Function
 
     # constructor
     function Model(size::Int; channels=32)
@@ -53,15 +54,11 @@ mutable struct Model
         """Policy network"""
         m._pc = Conv((1, 1), channels * 8 => div(channels, 2), relu; bias=false)
         m._p1 = Dense(div(channels, 2) * m._size * m._size => size * size, relu)
-        # _p = Chain(_l1, _l2, _l3, _l4, _pc, _p1)
-        # m.P = (x) -> p(x)
 
         """Value network"""
         m._vc = Conv((1, 1), channels * 8 => div(channels, 2), relu; bias=false)
         m._v1 = Dense(div(channels, 2) * m._size * m._size => channels * 2, relu)
         m._v2 = Dense(channels * 2 => 1, tanh)
-        # _v = Chain(_l1, _l2, _l3, _l4, _vc, _v1, _v2)
-        # m.V = (x) -> v(x)
 
         """Forward pass"""
         m.forward = (x) -> begin

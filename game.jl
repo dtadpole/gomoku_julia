@@ -1,12 +1,14 @@
 using Printf
 
 mutable struct Game
+
     # attributes
     _size::Int
     _turn::Float32
     _board::Array{Float32,2}
     _last_move::Tuple{Int,Int}
     _done::Bool
+
     # functions
     size::Function
     state::Function
