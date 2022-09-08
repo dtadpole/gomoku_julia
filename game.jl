@@ -9,23 +9,46 @@ mutable struct Game
     _done::Bool
     # functions
     size::Function
+    state::Function
+    turn::Function
     available_moves::Function
+    available_actions::Function
     play::Function
+    play_action::Function
     is_over::Function
     score::Function
     has_won::Function
     display::Function
     clone::Function
-    # constructor
 
+    # constructor
     function Game(size::Int; turn=1.0)
         g = new(size, turn, zeros(Float32, size, size), (0, 0), false)
 
         """Size"""
         g.size = () -> g._size
 
+        """State"""
+        g.state = () -> g._board
+
+        """Turn"""
+        g.turn = () -> g._turn
+
         """Available moves"""
         g.available_moves = () -> [(i, j) for i in 1:g._size for j in 1:g._size if g._board[i, j] == 0.0]
+
+        """Available actions"""
+        g.available_actions = () -> begin
+            actions = zeros(Float32, g._size * g._size)
+            for i in 1:g._size
+                for j in 1:g._size
+                    if g._board[i, j] == 0.0
+                        actions[(i-1)*g._size+j] = 1.0
+                    end
+                end
+            end
+            return actions
+        end
 
         """Play a move at (x, y)"""
         g.play = (x::Int, y::Int) -> begin
@@ -35,7 +58,25 @@ mutable struct Game
             if g._board[x, y] != 0.0
                 error("Invalid move [$(x), $(y)]")
             end
-            g._board[x, y] = g._turn
+            g._board[x, y] = sign(g._turn)
+            g._last_move = (x, y)
+            g._turn = -g._turn
+            if g.has_won()
+                g._done = true
+            end
+        end
+
+        """Play an action"""
+        g.play_action = (action::Int) -> begin
+            if g._done
+                error("Game is over")
+            end
+            x = div(action - 1, g._size) + 1
+            y = mod(action - 1, g._size) + 1
+            if g._board[x, y] != 0.0
+                error("Invalid move [$(x), $(y)]")
+            end
+            g._board[x, y] = sign(g._turn)
             g._last_move = (x, y)
             g._turn = -g._turn
             if g.has_won()
