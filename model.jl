@@ -45,31 +45,31 @@ mutable struct Model
         m.channels = () -> m._channels
 
         """Convolution layers"""
-        m._conv1 = Conv((3, 3), 1 => channels, relu; pad=(1, 1))
-        m._conv2 = Conv((3, 3), channels => channels * 2, relu; pad=(1, 1))
-        m._conv3 = Conv((3, 3), channels * 2 => channels * 4, relu; pad=(1, 1))
-        m._conv4 = Conv((3, 3), channels * 4 => channels * 4, relu; pad=(1, 1))
+        m._conv1 = Conv((3, 3), 1 => channels, relu; pad=(1, 1), bias=false)
+        m._conv2 = Conv((3, 3), channels => channels * 2, relu; pad=(1, 1), bias=false)
+        m._conv3 = Conv((3, 3), channels * 2 => channels * 4, relu; pad=(1, 1), bias=false)
+        m._conv4 = Conv((3, 3), channels * 4 => channels * 8, relu; pad=(1, 1), bias=false)
 
         """Policy network"""
-        m._pc = Conv((1, 1), channels * 4 => div(channels, 4), relu)
-        m._p1 = Dense(div(channels, 4) * m._size * m._size => size * size, relu)
+        m._pc = Conv((1, 1), channels * 8 => div(channels, 2), relu; bias=false)
+        m._p1 = Dense(div(channels, 2) * m._size * m._size => size * size, relu)
         # _p = Chain(_l1, _l2, _l3, _l4, _pc, _p1)
         # m.P = (x) -> p(x)
 
         """Value network"""
-        m._vc = Conv((1, 1), channels * 4 => div(channels, 4), relu)
-        m._v1 = Dense(div(channels, 4) * m._size * m._size => channels * 2, relu)
-        m._v2 = Dense(channels * 2 => 1, relu)
+        m._vc = Conv((1, 1), channels * 8 => div(channels, 2), relu; bias=false)
+        m._v1 = Dense(div(channels, 2) * m._size * m._size => channels * 2, relu)
+        m._v2 = Dense(channels * 2 => 1, tanh)
         # _v = Chain(_l1, _l2, _l3, _l4, _vc, _v1, _v2)
         # m.V = (x) -> v(x)
 
         """Forward pass"""
         m.forward = (x) -> begin
             conv = m._conv4(m._conv3(m._conv2(m._conv1(x))))
-            pc = reshape(m._pc(conv), (div(channels, 4) * m._size * m._size, :))
+            pc = reshape(m._pc(conv), (div(channels, 2) * m._size * m._size, :))
             p = softmax(m._p1(pc))
-            vc = reshape(m._vc(conv), (div(channels, 4) * m._size * m._size, :))
-            v = tanh.(m._v2(m._v1(vc)))
+            vc = reshape(m._vc(conv), (div(channels, 2) * m._size * m._size, :))
+            v = m._v2(m._v1(vc))
             return p, v
         end
 
