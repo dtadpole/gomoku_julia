@@ -70,20 +70,9 @@ mutable struct Game
 
         """Play an action"""
         g.play_action = (action::Int) -> begin
-            if g._done
-                error("Game is over")
-            end
             x = div(action - 1, g._size) + 1
             y = mod(action - 1, g._size) + 1
-            if g._board[x, y] != 0.0
-                error("Invalid move [$(x), $(y)]")
-            end
-            g._board[x, y] = sign(g._turn)
-            g._last_move = (x, y)
-            g._turn = -g._turn
-            if g.has_won()
-                g._done = true
-            end
+            g.play(x, y)
         end
 
         """Check if the game is over."""

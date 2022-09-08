@@ -24,107 +24,113 @@ mutable struct MctsNode
     nodeValue::Function
     updateBranch::Function
     travelBranch::Function
-    rootDistribution::Function
+    rootN::Function
 
     # constructor
     function MctsNode(game::Game, model::Model; ucb=3.0, gamma=0.98, parent=nothing, P=0.0)
 
-        mcts = new(game, model, ucb, gamma, parent, nothing, 0, P, 0.0)
+        node = new(game, model, ucb, gamma, parent, nothing, 0, P, 0.0)
 
         """Size"""
-        mcts.size = () -> mcts._game.size()
+        node.size = () -> node._game.size()
 
         """Parent"""
-        mcts.parent = () -> mcts._parent
+        node.parent = () -> node._parent
 
         """Clear parent"""
-        mcts.clearParent = () -> begin
-            mcts._parent = nothing
+        node.clearParent = () -> begin
+            node._parent = nothing
         end
 
         """Children"""
-        mcts.children = () -> mcts._children
+        node.children = () -> node._children
 
         """Expand children"""
-        mcts.expandChildren = () -> begin
-            if mcts._game.is_over()
+        node.expandChildren = () -> begin
+            if node._game.is_over()
                 error("Cannot expand children - game is over")
             end
-            pi, _ = mcts._model.forward(reshape(mcts._game.state(), (mcts.size(), mcts.size(), 1, 1)))
-            Pa = reshape(pi, mcts.size()^2) .* mcts._game.available_actions()
-            mcts._children = Array{Union{MctsNode,Nothing},1}(nothing, mcts.size()^2)
-            for i in 1:mcts.size()^2
+            pi, _ = node._model.forward(reshape(node._game.state(), (node.size(), node.size(), 1, 1)))
+            Pa = reshape(pi, node.size()^2) .* node._game.available_actions()
+            node._children = Array{Union{MctsNode,Nothing},1}(nothing, node.size()^2)
+            for i in 1:node.size()^2
                 if Pa[i] > 0.0
-                    game = mcts._game.clone()
+                    game = node._game.clone()
                     game.play_action(i)
-                    mcts._children[i] = MctsNode(game, mcts._model, ucb=mcts._ucb, gamma=mcts._gamma, parent=mcts, P=Pa[i])
+                    node._children[i] = MctsNode(game, node._model; ucb=node._ucb, gamma=node._gamma, parent=node, P=Pa[i])
                 end
             end
         end
 
         """Node Value : Q(S,a) + ucb * P(S,a) / (1 + N(S,a))"""
-        mcts.nodeValue = () -> mcts._Q + mcts._ucb * mcts._P / (1 + mcts._N)
+        node.nodeValue = () -> node._Q + node._ucb * node._P / (1 + node._N)
 
         """Update branch"""
-        mcts.updateBranch = (v::Float32) -> begin
-            mcts._Q += (mcts._Q * mcts._N + v) / (mcts._N + 1)
-            mcts._N += 1
-            if mcts._parent !== nothing
-                mcts._parent.updateBranch(-v * mcts._gamma)
+        node.updateBranch = (v::Float32) -> begin
+            node._Q = (node._Q * node._N + v) / (node._N + 1)
+            node._N += 1
+            if node._parent !== nothing
+                node._parent.updateBranch(-v * node._gamma)
             end
         end
 
         """Travel branch"""
-        mcts.travelBranch = () -> begin
-            if mcts._game.is_over()
-                mcts.updateBranch(mcts._game.score())
+        node.travelBranch = () -> begin
+            if node._game.is_over()
+                node.updateBranch(-node._game.score() * sign(node._game.turn()))
             else
-                if mcts._children === nothing
-                    mcts.expandChildren()
+                if node._children === nothing
+                    node.expandChildren()
                 end
-                values = [mcts._children[i] === nothing ? -Inf : mcts._children[i].nodeValue() for i in 1:mcts.size()^2]
+                values = [node._children[i] === nothing ? -Inf : node._children[i].nodeValue() for i in 1:node.size()^2]
                 i = argmax(values)
-                mcts._children[i].travelBranch()
+                node._children[i].travelBranch()
             end
         end
 
-        """Root distribution"""
-        mcts.rootDistribution = () -> begin
-            pi = zeros(Float32, mcts.size()^2)
-            for i in 1:mcts.size()^2
-                if mcts._children[i] !== nothing
-                    pi[i] = mcts._children[i]._N
+        """Root N distribution"""
+        node.rootN = () -> begin
+            pi = zeros(Int, node.size()^2)
+            for i in 1:node.size()^2
+                if node._children[i] !== nothing
+                    pi[i] = node._children[i]._N
                 end
             end
-            return pi ./ sum(pi)
+            return pi
         end
 
-        return mcts
+        return node
 
     end
 
 end
 
+function maxk(a, k)
+    b = partialsortperm(a, 1:k, rev=true)
+    return collect(zip(b, a[b]))
+end
+
 function _mcts_play()
 
     # create game
-    game = Game(7)
+    game = Game(9)
 
     # create model
-    model = Model(7)
+    model = Model(9)
 
     # create node
-    node = MctsNode(game, model, ucb=1.0, gamma=0.98)
+    node = MctsNode(game, model; ucb=3.0, gamma=0.98)
 
     while !game.is_over()
 
         # play
-        while node._N < 200
+        while node._N < 100
             node.travelBranch()
         end
 
         # get distribution
-        pi = node.rootDistribution()
+        pi = node.rootN()
+        println("maxK : $(maxk(pi, 5))")
 
         # play action
         action = argmax(pi)

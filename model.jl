@@ -53,19 +53,19 @@ mutable struct Model
 
         """Policy network"""
         m._pc = Conv((1, 1), channels * 4 => div(channels, 2), relu)
-        m._p1 = Dense(div(channels, 2) * m._size * m._size => size * size, relu)
+        m._p1 = Dense(div(channels, 2) * size * size => size * size, relu)
 
         """Value network"""
         m._vc = Conv((1, 1), channels * 4 => div(channels, 2), relu)
-        m._v1 = Dense(div(channels, 2) * m._size * m._size => channels * 2, relu)
+        m._v1 = Dense(div(channels, 2) * size * size => channels * 2, relu)
         m._v2 = Dense(channels * 2 => 1, tanh)
 
         """Forward pass"""
         m.forward = (x) -> begin
             conv = m._conv4(m._conv3(m._conv2(m._conv1(x))))
-            pc = reshape(m._pc(conv), (div(channels, 2) * m._size * m._size, :))
+            pc = reshape(m._pc(conv), (div(channels, 2) * size * size, :))
             pi = softmax(m._p1(pc))
-            vc = reshape(m._vc(conv), (div(channels, 2) * m._size * m._size, :))
+            vc = reshape(m._vc(conv), (div(channels, 2) * size * size, :))
             v = m._v2(m._v1(vc))
             return pi, v
         end
