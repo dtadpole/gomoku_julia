@@ -67,10 +67,8 @@ mutable struct Model
         m.forward = (x) -> begin
             conv = m._conv4(m._conv3(m._conv2(m._conv1(x))))
             pc = reshape(m._pc(conv), (div(channels, 4) * m._size * m._size, :))
-            # println("size of pc : ", size(pc))
             p = softmax(m._p1(pc))
             vc = reshape(m._vc(conv), (div(channels, 4) * m._size * m._size, :))
-            # println("size of vc : ", size(vc))
             v = tanh.(m._v2(m._v1(vc)))
             return p, v
         end
@@ -140,6 +138,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     m = Model(11)
-    # @show m
     _play_model(m)
 end
