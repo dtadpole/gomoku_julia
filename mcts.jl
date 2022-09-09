@@ -51,7 +51,11 @@ mutable struct MctsNode
             if node._game.is_over()
                 error("Cannot expand children - game is over")
             end
-            pi, _ = node._model.forward(reshape(node._game.state(), (node.size(), node.size(), 1, 1)))
+            state = node._game.state()
+            if CUDA.functional()
+                state = state |> gpu
+            end
+            pi, _ = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
             Pa = reshape(Array(pi), node.size()^2) .* node._game.available_actions()
             node._children = Array{Union{MctsNode,Nothing},1}(nothing, node.size()^2)
             for i in 1:node.size()^2

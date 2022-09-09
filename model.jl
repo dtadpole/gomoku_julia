@@ -75,9 +75,6 @@ mutable struct Model
 
         """Forward pass"""
         m.forward = (x) -> begin
-            if CUDA.functional()
-                x = x |> gpu
-            end
             p, v = m._model(x)
             return p, v
         end
@@ -130,6 +127,9 @@ function _play_model(model::Model)
             state = game.state()
         else
             state = -game.state()
+        end
+        if CUDA.functional()
+            state = state |> gpu
         end
         # get action
         pi, _ = model.forward(reshape(state, (model.size(), model.size(), 1, 1)))
