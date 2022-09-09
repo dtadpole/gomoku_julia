@@ -144,7 +144,7 @@ function _play_model(model::Model)
         # play action
         game.play_action(action)
         game.display()
-        print(length(model.params()))
+        # print(length(model.params()))
         sleep(0.2)
     end
 end
