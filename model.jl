@@ -1,6 +1,7 @@
 include("./game.jl")
 
 using Flux
+using CUDA
 using BSON: @save, @load
 using StatsBase
 
@@ -67,14 +68,27 @@ mutable struct Model
             )
         )
 
+        if CUDA.functional()
+            m._model = m._model |> gpu
+        end
+
+
         """Forward pass"""
         m.forward = (x) -> begin
+            if CUDA.functional()
+                x = x |> gpu
+            end
             p, v = m._model(x)
             return p, v
         end
 
         """Loss"""
         m.loss = (x, pi, v) -> begin
+            if CUDA.functional()
+                x = x |> gpu
+                pi = pi |> gpu
+                v = v |> gpu
+            end
             p_, v_ = m.forward(x)
             panelty() = 0.001 * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
             loss = -sum(pi .* log.(p_)) + sum((v - v_) .^ 2) + panelty()
