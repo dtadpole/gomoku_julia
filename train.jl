@@ -33,7 +33,7 @@ mutable struct Train
     train::Function
 
     # constructor
-    function Train(model::Model; opt=AdamW(0.001, (0.9, 0.999), 1e-8))
+    function Train(model::Model; opt=AdamW(0.0005, (0.9, 0.999), 1e-8))
 
         t = new(model, opt, Array{Tuple{Array{Float32,2},Array{Float32,2},Float32},1}())
 
