@@ -44,7 +44,7 @@ mutable struct Train
         t.playGame = () -> begin
 
             TEMPERATURE = 1.5
-            VISIT_COUNT = 100
+            VISIT_COUNT = 200
 
             # initialize game
             game_turn = rand() > 0.5 ? 1.0 : -1.0
@@ -154,7 +154,7 @@ mutable struct Train
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    model = Model(7)
+    model = Model(11)
     train = Train(model)
     train.train()
 end
