@@ -98,9 +98,9 @@ mutable struct Train
         """Train"""
         t.train = () -> begin
 
-            BATCH_SIZE = 64
+            BATCH_SIZE = 256
 
-            exp_step = t.size() * t.size() * 4
+            exp_step = t.size() * t.size() * 8
             train_step = exp_step * 4
 
             exp_trained_count = 0
