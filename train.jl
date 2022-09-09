@@ -124,8 +124,12 @@ mutable struct Train
                     pi = reshape(cat(pi...; dims=3), (t.size() * t.size(), BATCH_SIZE))
                     v = reshape(cat(v...; dims=2), (1, BATCH_SIZE))
                     lossF = () -> t._model.loss(s, pi, v)
-                    grads = gradient(lossF, Flux.params(t._model._model))
-                    Flux.update!(t._opt, Flux.params(t._model._model), grads)
+                    params = t._model.params()
+                    grads = gradient(lossF, params)
+                    if CUDA.functional()
+                        grads = map(x -> CUDA.allowscalar(x), grads)
+                    end
+                    Flux.update!(t._opt, params, grads)
 
                     exp_trained_count += BATCH_SIZE
                     exp_trained_weight += BATCH_SIZE
