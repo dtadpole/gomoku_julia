@@ -52,7 +52,7 @@ mutable struct MctsNode
                 error("Cannot expand children - game is over")
             end
             pi, _ = node._model.forward(reshape(node._game.state(), (node.size(), node.size(), 1, 1)))
-            Pa = reshape(pi, node.size()^2) .* node._game.available_actions()
+            Pa = reshape(Array(pi), node.size()^2) .* node._game.available_actions()
             node._children = Array{Union{MctsNode,Nothing},1}(nothing, node.size()^2)
             for i in 1:node.size()^2
                 if Pa[i] > 0.0
