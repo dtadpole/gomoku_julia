@@ -123,6 +123,11 @@ mutable struct Train
                     s = reshape(cat(s...; dims=3), (t.size(), t.size(), 1, BATCH_SIZE))
                     pi = reshape(cat(pi...; dims=3), (t.size() * t.size(), BATCH_SIZE))
                     v = reshape(cat(v...; dims=2), (1, BATCH_SIZE))
+                    if CUDA.functional()
+                        s = s |> gpu
+                        pi = pi |> gpu
+                        v = v |> gpu
+                    end
                     lossF = () -> t._model.loss(s, pi, v)
                     params = t._model.params()
                     @info "typeof(params)" typeof(params)
