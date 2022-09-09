@@ -123,7 +123,8 @@ mutable struct Train
                     s = reshape(cat(s...; dims=3), (t.size(), t.size(), 1, BATCH_SIZE))
                     pi = reshape(cat(pi...; dims=3), (t.size() * t.size(), BATCH_SIZE))
                     v = reshape(cat(v...; dims=2), (1, BATCH_SIZE))
-                    grads = gradient(() -> t._model.loss(s, pi, v), Flux.params(t._model._model))
+                    lossF = () -> t._model.loss(s, pi, v)
+                    grads = gradient(lossF, Flux.params(t._model._model))
                     Flux.update!(t._opt, Flux.params(t._model._model), grads)
 
                     exp_trained_count += BATCH_SIZE
