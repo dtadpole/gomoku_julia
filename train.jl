@@ -43,6 +43,9 @@ mutable struct Train
         """Play"""
         t.playGame = () -> begin
 
+            TEMPERATURE = 2.0
+            VISIT_COUNT = 100
+
             # initialize game
             game_turn = rand() > 0.5 ? 1.0 : -1.0
             game = Game(t.size(), turn=game_turn)
@@ -53,7 +56,7 @@ mutable struct Train
             while !game.is_over()
 
                 # play
-                while node._N < 100
+                while node._N < VISIT_COUNT
                     node.travelBranch()
                 end
 
@@ -63,7 +66,6 @@ mutable struct Train
                 t.addExperience(game.state(), pi, v)
 
                 # play action
-                TEMPERATURE = 3.0
                 pa = reshape(pi, t.size() * t.size())
                 pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
 
@@ -97,8 +99,9 @@ mutable struct Train
         t.train = () -> begin
 
             BATCH_SIZE = 64
-            EXP_STEP = t.size() * t.size() * 4
-            TRAIN_STEP = EXP_STEP * 4
+
+            exp_step = t.size() * t.size() * 4
+            train_step = exp_step * 4
 
             exp_trained_count = 0
             exp_trained_weight = 0.0
@@ -107,9 +110,9 @@ mutable struct Train
 
                 t.playGame()
 
-                exp_len_step = floor(Int, length(t._experiences) / EXP_STEP)
+                exp_len_step = floor(Int, length(t._experiences) / exp_step)
 
-                exp_trained_step = floor(Int, exp_trained_weight / TRAIN_STEP)
+                exp_trained_step = floor(Int, exp_trained_weight / train_step)
 
                 while exp_len_step > exp_trained_step
 
@@ -125,7 +128,7 @@ mutable struct Train
 
                     exp_trained_count += BATCH_SIZE
                     exp_trained_weight += BATCH_SIZE
-                    exp_trained_step = floor(Int, exp_trained_weight / TRAIN_STEP)
+                    exp_trained_step = floor(Int, exp_trained_weight / train_step)
 
                     @info "Training updated [$(exp_trained_count) / $(length(t._experiences))] ."
 
