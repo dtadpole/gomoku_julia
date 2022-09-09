@@ -125,6 +125,9 @@ mutable struct Train
                     v = reshape(cat(v...; dims=2), (1, BATCH_SIZE))
                     lossF = () -> t._model.loss(s, pi, v)
                     params = t._model.params()
+                    if CUDA.functional()
+                        params = params |> gpu
+                    end
                     grads = gradient(lossF, params)
                     if CUDA.functional()
                         grads = map(x -> CUDA.allowscalar(x), grads)
