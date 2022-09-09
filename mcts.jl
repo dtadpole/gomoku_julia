@@ -28,7 +28,7 @@ mutable struct MctsNode
     rootV::Function
 
     # constructor
-    function MctsNode(game::Game, model::Model; ucb=3.0, gamma=0.98, parent=nothing, P=0.0)
+    function MctsNode(game::Game, model::Model; ucb=5.0, gamma=0.98, parent=nothing, P=0.0)
 
         node = new(game, model, ucb, gamma, parent, nothing, 0, P, 0.0)
 
