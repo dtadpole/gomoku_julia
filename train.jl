@@ -37,6 +37,10 @@ mutable struct Train
 
         t = new(model, opt, Array{Tuple{Array{Float32,2},Array{Float32,2},Float32},1}())
 
+        if CUDA.functional()
+            t._opt = t._opt |> gpu
+        end
+
         """Size"""
         t.size = () -> t._model.size()
 
@@ -132,7 +136,7 @@ mutable struct Train
                     params = t._model.params()
                     # @info "typeof(params)" typeof(params)
                     grads = gradient(lossF, params)
-                    Flux.update!(t._opt, params, grads)
+                    Flux.Optimise.update!(t._opt, params, grads)
 
                     exp_trained_count += BATCH_SIZE
                     exp_trained_weight += BATCH_SIZE
