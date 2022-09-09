@@ -76,7 +76,7 @@ mutable struct Model
         """Loss"""
         m.loss = (x, pi, v) -> begin
             p_, v_ = m.forward(x)
-            panelty() = 0.01 * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
+            panelty() = 0.001 * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
             loss = -sum(pi .* log.(p_)) + sum((v - v_) .^ 2) + panelty()
             return loss
         end
