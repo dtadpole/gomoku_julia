@@ -4,35 +4,35 @@ using Flux
 using BSON: @save, @load
 using StatsBase
 
+# custom split layer
+struct Split{T}
+    paths::T
+end
+
+Split(paths...) = Split(paths)
+
+Flux.@functor Split
+
+(m::Split)(x::AbstractArray) = map(f -> f(x), m.paths)
+
+
+# model
 mutable struct Model
 
     # attributes
     _size::Int
     _channels::Int
-
-    # conv layers
-    _conv1::Conv
-    _conv2::Conv
-    _conv3::Conv
-    _conv4::Conv
-    # policy layers
-    _pc::Conv
-    _p1::Dense
-    # value layers
-    _vc::Conv
-    _v1::Dense
-    _v2::Dense
+    _model::Chain
 
     # functions
     size::Function
     channels::Function
     forward::Function
-    train::Function
-    loss_P::Function
-    loss_V::Function
+    loss::Function
     save::Function
     load::Function
     clone::Function
+    params::Function
 
     # constructor
     function Model(size::Int; channels=32)
@@ -45,67 +45,68 @@ mutable struct Model
         """Channels"""
         m.channels = () -> m._channels
 
-        """Convolution layers"""
-        m._conv1 = Conv((3, 3), 1 => channels, relu; pad=(1, 1), bias=false)
-        m._conv2 = Conv((3, 3), channels => channels * 2, relu; pad=(1, 1), bias=false)
-        m._conv3 = Conv((3, 3), channels * 2 => channels * 4, relu; pad=(1, 1), bias=false)
-        m._conv4 = Conv((3, 3), channels * 4 => channels * 4, relu; pad=(1, 1), bias=false)
-
-        """Policy network"""
-        m._pc = Conv((1, 1), channels * 4 => div(channels, 2), relu)
-        m._p1 = Dense(div(channels, 2) * size * size => size * size, relu)
-
-        """Value network"""
-        m._vc = Conv((1, 1), channels * 4 => div(channels, 2), relu)
-        m._v1 = Dense(div(channels, 2) * size * size => channels * 2, relu)
-        m._v2 = Dense(channels * 2 => 1, tanh)
+        """Model"""
+        m._model = Chain(
+            Conv((3, 3), 1 => channels, relu; pad=(1, 1), bias=false),
+            Conv((3, 3), channels => channels * 2, relu; pad=(1, 1), bias=false),
+            Conv((3, 3), channels * 2 => channels * 4, relu; pad=(1, 1), bias=false),
+            Conv((3, 3), channels * 4 => channels * 4, relu; pad=(1, 1), bias=false),
+            Split(
+                Chain(
+                    Conv((1, 1), channels * 4 => div(channels, 2), relu),
+                    x -> reshape(x, (div(channels, 2) * size * size, :)),
+                    Dense(div(channels, 2) * size * size => size * size, relu),
+                    softmax
+                ),
+                Chain(
+                    Conv((1, 1), channels * 4 => div(channels, 2), relu),
+                    x -> reshape(x, (div(channels, 2) * size * size, :)),
+                    Dense(div(channels, 2) * size * size => channels * 2, relu),
+                    Dense(channels * 2 => 1, tanh)
+                )
+            )
+        )
 
         """Forward pass"""
         m.forward = (x) -> begin
-            conv = m._conv4(m._conv3(m._conv2(m._conv1(x))))
-            pc = reshape(m._pc(conv), (div(channels, 2) * size * size, :))
-            pi = softmax(m._p1(pc))
-            vc = reshape(m._vc(conv), (div(channels, 2) * size * size, :))
-            v = m._v2(m._v1(vc))
-            return pi, v
+            p, v = m._model(x)
+            return p, v
+        end
+
+        """Loss"""
+        m.loss = (x, pi, v) -> begin
+            p_, v_ = m.forward(x)
+            panelty() = 0.01 * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
+            loss = -sum(pi .* log.(p_)) + sum((v - v_) .^ 2) + panelty()
+            return loss
         end
 
         """Save"""
         m.save = (path) -> begin
-            @save path _size _channels _conv1 _conv2 _conv3 _conv4 _pc _p1 _vc _v1 _v2
+            _size = m.size()
+            _channels = m.channels()
+            _model = m._model
+            @save path _size _channels _model
         end
 
         """Load"""
         m.load = (path) -> begin
-            @load path _size _channels _conv1 _conv2 _conv3 _conv4 _pc _p1 _vc _v1 _v2
+            @load path _size _channels _model
+            m._size = _size
+            m._channels = _channels
+            m._model = _model
         end
 
         """Clone"""
         m.clone = () -> begin
             m2 = Model(m._size, channels=m._channels)
-            # conv params
-            m2._conv1.weight .= m._conv1.weight
-            m2._conv1.bias .= m._conv1.bias
-            m2._conv2.weight .= m._conv2.weight
-            m2._conv2.bias .= m._conv2.bias
-            m2._conv3.weight .= m._conv3.weight
-            m2._conv3.bias .= m._conv3.bias
-            m2._conv4.weight .= m._conv4.weight
-            m2._conv4.bias .= m._conv4.bias
-            # policy params
-            m2._pc.weight .= m._pc.weight
-            m2._pc.bias .= m._pc.bias
-            m2._p1.weight .= m._p1.weight
-            m2._p1.bias .= m._p1.bias
-            # value params
-            m2._vc.weight .= m._vc.weight
-            m2._vc.bias .= m._vc.bias
-            m2._v1.weight .= m._v1.weight
-            m2._v1.bias .= m._v1.bias
-            m2._v2.weight .= m._v2.weight
-            m2._v2.bias .= m._v2.bias
-            # return
+            m2._model = deepcopy(m._model)
             return m2
+        end
+
+        """Params"""
+        m.params = () -> begin
+            return Flux.params(m._model)
         end
 
         return m
@@ -129,6 +130,7 @@ function _play_model(model::Model)
         # play action
         game.play_action(action)
         game.display()
+        print(length(model.params()))
         sleep(0.2)
     end
 end

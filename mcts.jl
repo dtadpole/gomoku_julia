@@ -25,6 +25,7 @@ mutable struct MctsNode
     updateBranch::Function
     travelBranch::Function
     rootN::Function
+    rootV::Function
 
     # constructor
     function MctsNode(game::Game, model::Model; ucb=3.0, gamma=0.98, parent=nothing, P=0.0)
@@ -99,6 +100,11 @@ mutable struct MctsNode
             return pi
         end
 
+        """Root V"""
+        node.rootV = () -> begin
+            return node._Q
+        end
+
         return node
 
     end
@@ -112,13 +118,19 @@ end
 
 function _mcts_play()
 
+    # game size
+    game_size = 9
+
+    # initial game turn
+    game_turn = rand() > 0.5 ? 1.0 : -1.0
+
     # create game
-    game = Game(9)
+    game = Game(game_size, turn=game_turn)
 
     # create model
-    model = Model(9)
+    model = Model(game_size)
 
-    # create node
+    # create mcts node
     node = MctsNode(game, model; ucb=3.0, gamma=0.98)
 
     while !game.is_over()
