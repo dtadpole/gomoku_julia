@@ -130,15 +130,8 @@ mutable struct Train
                     end
                     lossF = () -> t._model.loss(s, pi, v)
                     params = t._model.params()
-                    @info "typeof(params)" typeof(params)
-                    # if CUDA.functional()
-                    #     params = params |> gpu
-                    # end
                     # @info "typeof(params)" typeof(params)
                     grads = gradient(lossF, params)
-                    # if CUDA.functional()
-                    #     grads = map(x -> CUDA.allowscalar(x), grads)
-                    # end
                     Flux.update!(t._opt, params, grads)
 
                     exp_trained_count += BATCH_SIZE
