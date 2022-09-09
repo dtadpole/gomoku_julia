@@ -43,7 +43,7 @@ mutable struct Train
         """Play"""
         t.playGame = () -> begin
 
-            TEMPERATURE = 2.0
+            TEMPERATURE = 1.5
             VISIT_COUNT = 100
 
             # initialize game
