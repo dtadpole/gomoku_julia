@@ -135,16 +135,19 @@ function _play_model(model::Model)
         pi, _ = model.forward(reshape(state, (model.size(), model.size(), 1, 1)))
         available_actions = game.available_actions()
         distribution = reshape(Array(pi), model.size()^2) .* available_actions
-        action = sample(1:model.size()^2, ProbabilityWeights(distribution))
+        action = sample(1:model.size()^2, Weights(distribution))
         # play action
         game.play_action(action)
-        game.display()
-        # print(length(model.params()))
-        sleep(0.2)
+        if args["game_display"]
+            game.display()
+            sleep(0.2)
+        end
     end
+    game.display()
+    @info "Game score : $(game.score())"
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    m = Model(11)
+    m = Model(args["game_size"], channels=args["model_channels"])
     _play_model(m)
 end

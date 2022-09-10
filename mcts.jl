@@ -120,50 +120,61 @@ function maxk(a, k)
     return collect(zip(b, a[b]))
 end
 
-function _mcts_play()
+function mcts_play_game(model::Model)
 
-    # game size
-    game_size = 9
+    TEMPERATURE = args["mcts_temperature"]
 
-    # initial game turn
+    experiences = Array{Tuple{Array{Float32,2},Array{Float32,2},Float32},1}()
+
+    # initialize game
     game_turn = rand() > 0.5 ? 1.0 : -1.0
-
-    # create game
-    game = Game(game_size, turn=game_turn)
-
-    # create model
-    model = Model(game_size)
+    game = Game(model.size(), turn=game_turn)
 
     # create mcts node
-    node = MctsNode(game, model; ucb=3.0, gamma=0.98)
+    node = MctsNode(game, model; ucb=args["mcts_ucb"], gamma=args["mcts_gamma"])
 
     while !game.is_over()
 
         # play
-        while node._N < 100
+        while node._N < args["mcts_n"]
             node.travelBranch()
         end
 
         # get distribution
-        pi = node.rootN()
-        println("maxK : $(maxk(pi, 5))")
+        pi = reshape(node.rootN(), (model.size(), model.size()))
+        v = node.rootV()
+        push!(experiences, (game.state(), pi, v))
 
         # play action
-        action = argmax(pi)
-        # action = sample(1:model.size()^2, ProbabilityWeights(pi))
-        game.play_action(action)
+        pa = reshape(pi, model.size() * model.size())
+        if TEMPERATURE > 1e-4
+            pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
+            action = sample(1:model.size()^2, StatsBase.Weights(pa))
+        else
+            pa = pa .* game.available_actions()
+            action = argmax(pa)
+        end
 
-        # update node
+        game.play_action(action)
+        if args["game_display"]
+            # println("maxK : $(maxk(pa, 5))")
+            @info maxk(node.rootN(), 5)
+            # display
+            game.display()
+        end
+
+        # update mcts node
         node = node._children[action]
         node.clearParent()
 
-        # display
-        game.display()
-
     end
+
+    return experiences
 
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    _mcts_play()
+    # create model
+    model = Model(args["game_size"], channels=args["model_channels"])
+    mcts_play_game(model)
 end

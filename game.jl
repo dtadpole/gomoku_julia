@@ -1,3 +1,5 @@
+include("./args.jl")
+
 using Printf
 
 mutable struct Game
@@ -213,16 +215,17 @@ end
 
 
 """Play out a game and return the winner."""
-function _random_playout(g::Game; display=false)
+function _random_playout(g::Game)
     while !g.is_over()
         moves = g.available_moves()
         move = moves[rand(1:length(moves))]
         g.play(move...)
-        if display
+        if args["game_display"]
             g.display()
             sleep(0.2)
         end
     end
+    # game end
     g.display()
     score = g.score()
     println("score [$(score)]")
@@ -230,6 +233,6 @@ function _random_playout(g::Game; display=false)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    g = Game(11)
-    _random_playout(g, display=true)
+    g = Game(args["game_size"])
+    _random_playout(g)
 end

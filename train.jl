@@ -47,42 +47,12 @@ mutable struct Train
         """Play"""
         t.playGame = () -> begin
 
-            TEMPERATURE = 1.5
-            VISIT_COUNT = 200
+            experiences = mcts_play_game(t._model)
 
-            # initialize game
-            game_turn = rand() > 0.5 ? 1.0 : -1.0
-            game = Game(t.size(), turn=game_turn)
-
-            # create mcts node
-            node = MctsNode(game.clone(), model; ucb=3.0, gamma=0.98)
-
-            while !game.is_over()
-
-                # play
-                while node._N < VISIT_COUNT
-                    node.travelBranch()
-                end
-
-                # get distribution
-                pi = reshape(node.rootN(), (t.size(), t.size()))
-                v = node.rootV()
-                t.addExperience(game.state(), pi, v)
-
-                # play action
-                pa = reshape(pi, t.size() * t.size())
-                pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
-
-                # action = argmax(pa)
-                action = sample(1:model.size()^2, StatsBase.Weights(pa))
-                game.play_action(action)
-                game.display()
-
-                # update node
-                node = node._children[action]
-                node.clearParent()
-
+            for (state, pi, v) in experiences
+                t.addExperience(state, pi, v)
             end
+
         end
 
         """Add experience"""
@@ -102,7 +72,7 @@ mutable struct Train
         """Train"""
         t.train = () -> begin
 
-            BATCH_SIZE = 256
+            BATCH_SIZE = args["train_batch_size"]
 
             exp_step = t.size() * t.size() * 8
             train_step = exp_step * 4
@@ -158,7 +128,7 @@ mutable struct Train
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    model = Model(11)
+    model = Model(args["game_size"], channels=args["model_channels"])
     train = Train(model)
     train.train()
 end
