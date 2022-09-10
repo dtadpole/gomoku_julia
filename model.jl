@@ -68,7 +68,7 @@ mutable struct Model
             )
         )
 
-        if CUDA.functional()
+        if args["model_cuda"] >= 0
             m._model = m._model |> gpu
         end
 
@@ -128,7 +128,7 @@ function _play_model(model::Model)
         else
             state = -game.state()
         end
-        if CUDA.functional()
+        if args["model_cuda"] >= 0
             state = state |> gpu
         end
         # get action

@@ -52,7 +52,7 @@ mutable struct MctsNode
                 error("Cannot expand children - game is over")
             end
             state = node._game.state()
-            if CUDA.functional()
+            if args["model_cuda"] >= 0
                 state = state |> gpu
             end
             pi, _ = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))

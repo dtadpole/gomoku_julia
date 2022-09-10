@@ -1,4 +1,5 @@
 using ArgParse
+using CUDA
 
 function parse_commandline()
 
@@ -20,8 +21,8 @@ function parse_commandline()
         arg_type = Int
         default = 32
 
-        "--model_cuda_id"
-        help = "model cuda id"
+        "--model_cuda"
+        help = "model cuda number"
         arg_type = Int
         default = -1
 
@@ -57,6 +58,11 @@ function parse_commandline()
 end
 
 args = parse_commandline()
+
+if args["model_cuda"] >= 0
+    CUDA.allowscalar(false)
+    CUDA.device!(args["model_cuda"])
+end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     @info args

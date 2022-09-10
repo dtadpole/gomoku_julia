@@ -37,7 +37,7 @@ mutable struct Train
 
         t = new(model, opt, Array{Tuple{Array{Float32,2},Array{Float32,2},Float32},1}())
 
-        if CUDA.functional()
+        if args["model_cuda"] >= 0
             t._opt = t._opt |> gpu
         end
 
@@ -97,7 +97,7 @@ mutable struct Train
                     s = reshape(cat(s...; dims=3), (t.size(), t.size(), 1, BATCH_SIZE))
                     pi = reshape(cat(pi...; dims=3), (t.size() * t.size(), BATCH_SIZE))
                     v = reshape(cat(v...; dims=2), (1, BATCH_SIZE))
-                    if CUDA.functional()
+                    if args["model_cuda"] >= 0
                         s = s |> gpu
                         pi = pi |> gpu
                         v = v |> gpu
