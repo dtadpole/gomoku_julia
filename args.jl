@@ -69,7 +69,7 @@ function parse_commandline()
         "--train_kl_target"
         help = "train kl target"
         arg_type = Float32
-        default = Float32(0.005)
+        default = Float32(0.01)
 
         "--learning_rate"
         help = "learning rate"
@@ -94,7 +94,7 @@ function parse_commandline()
         "--adamw_weight_decay"
         help = "adamw weight decay"
         arg_type = Float32
-        default = Float32(0.001)
+        default = Float32(0.01)
 
         "--exp_min"
         help = "experience min"
