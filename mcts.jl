@@ -148,8 +148,9 @@ function mcts_play_game(model::Model)
         # play action
         pa = reshape(pi, model.size() * model.size())
         if TEMPERATURE > 1e-4
-            pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
-            action = sample(1:model.size()^2, StatsBase.Weights(pa))
+            pa = softmax(pa / TEMPERATURE) .* game.available_actions()
+            # pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
+            action = sample(1:model.size()^2, StatsBase.ProbabilityWeights(pa))
         else
             pa = pa .* game.available_actions()
             action = argmax(pa)
