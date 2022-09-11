@@ -17,7 +17,7 @@ mutable struct Train
     # constructor
     function Train(model::Model, opt::Flux.Optimise.Optimiser)
 
-        t = new(model, opt, Experiences())
+        t = new(model, opt, Experiences(model))
 
         if args["model_cuda"] >= 0
             t._opt = t._opt |> gpu
@@ -34,12 +34,13 @@ mutable struct Train
             TRAIN_EPOCHS = args["train_epochs"]
 
             exp_trained_count = 0
+            exp_trained_step = 0
 
             while true
 
-                t._experiences.playGame(t._model)
+                t._experiences.playGame()
 
-                if t._experiences.length() > BATCH_SIZE * BATCH_NUM && exp_trained_count + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < TRAIN_EPOCHS * t._experiences.totalCount()
+                if exp_trained_count + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount() * TRAIN_EPOCHS
 
                     (states, pis, vs) = t._experiences.sampleExperience(BATCH_SIZE * BATCH_NUM)
 
@@ -49,10 +50,9 @@ mutable struct Train
 
                         for batch in 1:BATCH_NUM
 
-                            state = states[(batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                            pi = pis[(batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                            v = vs[(batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-
+                            state = states[:, :, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                            pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                            v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
                             lossF = () -> t._model.loss(state, pi, v)
                             params = t._model.params()
@@ -67,6 +67,8 @@ mutable struct Train
                         @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] ."
 
                     end
+
+                    exp_trained_step += 1
 
                     # save model
                     t._model.save("model_$(model.size())_$(exp_trained_step).model")

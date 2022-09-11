@@ -19,10 +19,12 @@ end
 mutable struct Experiences
 
     # attributes
+    _model::Model
     _exp_list::Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}
     _total_count::Int
 
     # functions
+    size::Function
     length::Function
     totalCount::Function
     playGame::Function
@@ -30,20 +32,23 @@ mutable struct Experiences
     sampleExperience::Function
 
     # constructor
-    function Experiences()
+    function Experiences(model::Model)
 
-        e = new(Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}(), 0)
+        e = new(model, Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}(), 0)
+
+        """Size"""
+        e.size = () -> e._model.size()
 
         """Length"""
         e.length = () -> length(e._exp_list)
 
         """Total size"""
-        e.totalCount = () -> e._tot
+        e.totalCount = () -> e._total_count
 
         """Play game"""
-        e.playGame = (model::Model) -> begin
+        e.playGame = () -> begin
 
-            experiences = mcts_play_game(model)
+            experiences = mcts_play_game(e._model)
 
             for (state, pi, v) in experiences
                 e.addExperience(state, pi, v)
@@ -82,8 +87,8 @@ mutable struct Experiences
         """Sample experience"""
         e.sampleExperience = (sample_size::Int) -> begin
             s, pi, v = unzip(sample(e._exp_list, sample_size))
-            s = reshape(cat(s...; dims=3), (t.size(), t.size(), 1, sample_size))
-            pi = reshape(cat(pi...; dims=3), (t.size() * t.size(), sample_size))
+            s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
+            pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
             v = reshape(cat(v...; dims=2), (1, sample_size))
             if args["model_cuda"] >= 0
                 s = s |> gpu
@@ -101,6 +106,6 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     # create model
     model = Model(args["game_size"], channels=args["model_channels"])
-    e = Experiences()
-    e.playGame(model)
+    e = Experiences(model)
+    e.playGame()
 end
