@@ -35,7 +35,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
         catch e
             @error "Error" exception = (e, catch_backtrace())
         finally
-            sleep(2^i)
+            sleep(1.5^i)
         end
     end
 end
