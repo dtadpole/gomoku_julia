@@ -2,6 +2,21 @@ include("./exp.jl")
 
 using Unzip
 
+function backup_file(filename)
+    filename_bak = "$(filename).bak"
+    filename_bak_bak = "$(filename_bak).bak"
+    if isfile(filename_bak_bak)
+        mv(filename_bak_bak, "$(filename_bak_bak).bak", force=true)
+    end
+    if isfile(filename_bak)
+        mv(filename_bak, filename_bak_bak, force=true)
+    end
+    if isfile(filename)
+        mv(filename, filename_bak, force=true)
+    end
+    return nothing
+end
+
 mutable struct Train
 
     # attributes
@@ -123,7 +138,9 @@ mutable struct Train
                         exp_trained_step += 1
 
                         # save model
-                        t._model.save("model/$(model.size())_$(exp_trained_step).model")
+                        filename = "./model/trained_$(model.size()).curr"
+                        backup_file(filename)
+                        t._model.save(filename)
 
                     end
 
