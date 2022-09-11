@@ -3,6 +3,7 @@ include("./game.jl")
 using Flux
 using CUDA
 using JLD
+using Serialization
 using StatsBase
 
 # custom split layer
