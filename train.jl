@@ -42,90 +42,103 @@ mutable struct Train
 
             while true
 
-                t._experiences.playGame()
+                try
 
-                if exp_trained_count + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount() * TRAIN_EPOCHS
+                    # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
-                    for epoch in 1:TRAIN_EPOCHS
+                    if exp_trained_count + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount() * TRAIN_EPOCHS
 
-                        # re-sample each epoch
-                        (states, pis, vs) = t._experiences.sampleExperience(BATCH_SIZE * BATCH_NUM)
+                        for epoch in 1:TRAIN_EPOCHS
 
-                        # keeps previous policy
-                        prev_policy, _ = t._model.forward(states)
+                            # re-sample each epoch
+                            (states, pis, vs) = t._experiences.sampleExperience(BATCH_SIZE * BATCH_NUM)
 
-                        # keeps a list of kl divergence
-                        kl_list = Vector{Float32}()
+                            # keeps previous policy
+                            prev_policy, _ = t._model.forward(states)
 
-                        @info "Training epoch $(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
+                            # keeps a list of kl divergence
+                            kl_list = Vector{Float32}()
 
-                        for batch in 1:BATCH_NUM
+                            @info "Training epoch $(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
 
-                            state = states[:, :, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                            pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                            v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                            for batch in 1:BATCH_NUM
 
-                            lossF = () -> t._model.loss(state, pi, v)
-                            params = t._model.params()
-                            grads = gradient(lossF, params)
+                                state = states[:, :, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                                pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                                v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
-                            Flux.Optimise.update!(t._opt, params, grads)
+                                lossF = () -> t._model.loss(state, pi, v)
+                                params = t._model.params()
+                                grads = gradient(lossF, params)
 
-                            exp_trained_count += BATCH_SIZE
+                                Flux.Optimise.update!(t._opt, params, grads)
 
-                            # calculate new policy
-                            new_pi, _ = t._model.forward(state)
+                                exp_trained_count += BATCH_SIZE
 
-                            # extract prev policy
-                            prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                                # calculate new policy
+                                new_pi, _ = t._model.forward(state)
 
-                            # calculate KL divergence
-                            kl = reshape(sum(prev_pi .* (log.(prev_pi) - log.(new_pi)), dims=1), BATCH_SIZE)
-                            kl_mean = mean(kl)
+                                # extract prev policy
+                                prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
-                            # update global list
-                            kl_list = vcat(kl_list, kl)
+                                # calculate KL divergence
+                                kl = reshape(sum(prev_pi .* (log.(prev_pi) - log.(new_pi)), dims=1), BATCH_SIZE)
+                                kl_mean = mean(kl)
 
-                            # check if kl divergence is too high, break early if so
-                            if kl_mean > 5 * args["train_kl_target"]
-                                @info "KL divergence [$(round(kl_mean, digits=4)) > 5 * $(args["train_kl_target"])] ... stopping early ."
-                                break
+                                # update global list
+                                kl_list = vcat(kl_list, kl)
+
+                                # check if kl divergence is too high, break early if so
+                                if kl_mean > 5 * args["train_kl_target"]
+                                    @info "KL divergence [$(round(kl_mean, digits=4)) > 5 * $(args["train_kl_target"])] ... stopping early ."
+                                    break
+                                end
+
+                            end
+
+                            @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] ."
+
+                            # check for kl divergence
+                            kl_mean = mean(kl_list)
+
+                            if kl_mean > args["train_kl_target"] * 2.0 && lr_multiplier > 1.0 / args["learning_rate_range"]
+                                lr_multiplier /= 1.5
+                                new_learning_rate = args["learning_rate"] * lr_multiplier
+                                @info "KL divergence [$(round(kl_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=5))] ."
+                                # update learning rate
+                                t._opt[1].eta = new_learning_rate
+                            elseif kl_mean < args["train_kl_target"] / 2.0 && lr_multiplier < args["learning_rate_range"]
+                                lr_multiplier *= 1.5
+                                new_learning_rate = args["learning_rate"] * lr_multiplier
+                                @info "KL divergence [$(round(kl_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=5))] ."
+                                # update learning rate
+                                t._opt[1].eta = new_learning_rate
+                            else
+                                new_learning_rate = args["learning_rate"] * lr_multiplier
+                                @info "KL divergence [$(round(kl_mean, digits=4)) within range] ... keeping learning rate as [$(round(new_learning_rate, digits=5))] ."
                             end
 
                         end
 
-                        @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] ."
+                        exp_trained_step += 1
 
-                        # check for kl divergence
-                        kl_mean = mean(kl_list)
-
-                        if kl_mean > args["train_kl_target"] * 2.0 && lr_multiplier > 1.0 / args["learning_rate_range"]
-                            lr_multiplier /= 1.5
-                            new_learning_rate = args["learning_rate"] * lr_multiplier
-                            @info "KL divergence [$(round(kl_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=5))] ."
-                            # update learning rate
-                            t._opt[1].eta = new_learning_rate
-                        elseif kl_mean < args["train_kl_target"] / 2.0 && lr_multiplier < args["learning_rate_range"]
-                            lr_multiplier *= 1.5
-                            new_learning_rate = args["learning_rate"] * lr_multiplier
-                            @info "KL divergence [$(round(kl_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=5))] ."
-                            # update learning rate
-                            t._opt[1].eta = new_learning_rate
-                        else
-                            new_learning_rate = args["learning_rate"] * lr_multiplier
-                            @info "KL divergence [$(round(kl_mean, digits=4)) within range] ... keeping learning rate as [$(round(new_learning_rate, digits=5))] ."
-                        end
+                        # save model
+                        t._model.save("model_$(model.size())_$(exp_trained_step).model")
 
                     end
 
-                    exp_trained_step += 1
+                catch e
 
-                    # save model
-                    t._model.save("model_$(model.size())_$(exp_trained_step).model")
+                    @error "Error" exception = (e, catch_backtrace())
+
+                finally
+
+                    sleep(1)
 
                 end
 
             end
+
         end
 
         return t
