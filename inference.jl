@@ -18,9 +18,11 @@ playout = () -> begin
     params_size = sum([length(l) for l in Flux.params(model._model)])
     @info "Requested model from $(url) : $(model.size()), $(model.channels()), $(params_size)"
 
-    experences = mcts_play_game(model)
+    experiences = mcts_play_game(model)
+    io = IOBuffer()
+    serialize(io, experiences)
 
-    r = HTTP.request(:POST, "$(url)/experiences", body=serialize(experences))
+    r = HTTP.request(:POST, "$(url)/experiences", body=take!(io))
     @info "Post experiences : $(r.status)"
 
 end
