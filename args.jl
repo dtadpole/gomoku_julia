@@ -54,17 +54,32 @@ function parse_commandline()
         "--train_batch_size"
         help = "train batch size"
         arg_type = Int
-        default = 64
+        default = 256
 
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 64
+        default = 16
 
         "--train_epochs"
         help = "train epochs"
         arg_type = Int
         default = 4
+
+        "--train_kl_target"
+        help = "train kl target"
+        arg_type = Float32
+        default = Float32(0.005)
+
+        "--learning_rate"
+        help = "learning rate"
+        arg_type = Float32
+        default = Float32(0.001)
+
+        "--learning_rate_range"
+        help = "learning rate range"
+        arg_type = Float32
+        default = Float32(6.0)
 
         "--adamw_beta1"
         help = "adamw beta1"
@@ -78,21 +93,6 @@ function parse_commandline()
 
         "--adamw_weight_decay"
         help = "adamw weight decay"
-        arg_type = Float32
-        default = Float32(0.01)
-
-        "--learning_rate"
-        help = "learning rate"
-        arg_type = Float32
-        default = Float32(0.001)
-
-        "--learning_rate_range"
-        help = "learning rate range"
-        arg_type = Float32
-        default = Float32(5.0)
-
-        "--learning_kl_target"
-        help = "learning kl target"
         arg_type = Float32
         default = Float32(0.01)
 
