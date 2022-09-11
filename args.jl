@@ -31,6 +31,11 @@ function parse_commandline()
         arg_type = Float32
         default = Float32(0.2)
 
+        "--model_loss_theta_entropy"
+        help = "model loss theta coefficient"
+        arg_type = Float32
+        default = Float32(0.001)
+
         "--mcts_n"
         help = "mcts play count"
         arg_type = Int

@@ -123,7 +123,7 @@ mutable struct Train
                         exp_trained_step += 1
 
                         # save model
-                        t._model.save("model_$(model.size())_$(exp_trained_step).model")
+                        t._model.save("model/$(model.size())_$(exp_trained_step).model")
 
                     end
 
