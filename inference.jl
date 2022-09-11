@@ -33,6 +33,8 @@ if abspath(PROGRAM_FILE) == @__FILE__
             playout()
         catch e
             @error "Error : $(e)"
+        finally
+            sleep(1)
         end
     end
 end
