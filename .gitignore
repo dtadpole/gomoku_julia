@@ -25,3 +25,4 @@ Manifest.toml
 
 # ignore models
 *.model
+*.bak
