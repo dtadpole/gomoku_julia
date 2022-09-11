@@ -28,8 +28,9 @@ infer_playout = () -> begin
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    for in in 1:args["infer_playouts"]
+    for i in 1:args["infer_playouts"]
         try
+            @info "iteration [$(i)]"
             infer_playout()
         catch e
             @error "Error" exception = (e, catch_backtrace())
