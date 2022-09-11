@@ -102,7 +102,7 @@ mutable struct Model
             size, channels, model = deserialize(io)
             m._size = size
             m._channels = channels
-            m._model = model
+            Flux.loadmodel!(m._model, model)
             close(io)
         end
 
