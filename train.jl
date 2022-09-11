@@ -86,7 +86,7 @@ mutable struct Train
                                 kl_mean = mean(kl)
 
                                 # update global list
-                                kl_list = vcat(kl_list, kl)
+                                kl_list = vcat(kl_list, kl |> cpu)
 
                                 # check if kl divergence is too high, break early if so
                                 if kl_mean > 5 * args["train_kl_target"]
