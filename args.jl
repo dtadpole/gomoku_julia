@@ -94,17 +94,27 @@ function parse_commandline()
         "--adamw_weight_decay"
         help = "adamw weight decay"
         arg_type = Float32
-        default = Float32(0.01)
+        default = Float32(0.001)
 
-        "--experience_min"
+        "--exp_min"
         help = "experience min"
         arg_type = Int
-        default = 8_000
+        default = 4_000
 
-        "--experience_max"
+        "--exp_max"
         help = "experience max"
         arg_type = Int
         default = 400_000
+
+        "--exp_server"
+        help = "experience server"
+        arg_type = String
+        default = "localhost"
+
+        "--exp_port"
+        help = "experience port"
+        arg_type = Int
+        default = 5555
 
     end
 

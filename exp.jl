@@ -1,5 +1,7 @@
 include("./mcts.jl")
 
+using HTTP
+
 rotate90 = (a::Matrix) -> begin
     reverse(transpose(a), dims=2)
 end
@@ -30,6 +32,7 @@ mutable struct Experiences
     playGame::Function
     addExperience::Function
     sampleExperience::Function
+    startServer::Function
 
     # constructor
     function Experiences(model::Model)
@@ -75,7 +78,7 @@ mutable struct Experiences
             e._total_count += 8
 
             # target experience size
-            target_exp_size = max(args["experience_min"], min(args["experience_max"],
+            target_exp_size = max(args["exp_min"], min(args["exp_max"],
                 floor(Int, (e._total_count - args["experience_min"]) / 2) + args["experience_min"]))
 
             # truncate experiences
@@ -98,7 +101,45 @@ mutable struct Experiences
             return s, pi, v
         end
 
+        """Start server"""
+        e.startServer = () -> begin
+
+            router = HTTP.Router()
+
+            # post a single game experience
+            HTTP.register!(router, "/experience", HTTP.Methods.POST, (req) -> begin
+                body = HTTP.payload(req)
+                io = IOBuffer(body)
+                s, pi, v = deserialize(io)
+                e.addExperience(s, pi, v)
+                return HTTP.Response(200, "OK")
+            end)
+
+            # post a list of game experiences
+            HTTP.register!(router, "/experiences", HTTP.Methods.POST, (req) -> begin
+                body = HTTP.payload(req)
+                io = IOBuffer(body)
+                experiences = deserialize(io)
+                for (s, pi, v) in experiences
+                    e.addExperience(s, pi, v)
+                end
+                return HTTP.Response(200, "OK")
+            end)
+
+            # download model
+            HTTP.register!(router, "/model", HTTP.Methods.GET, (req) -> begin
+                io = IOBuffer()
+                serialize(io, (e._model.size(), e._model.channels(), e._model._model))
+                return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
+            end)
+
+            # start server
+            server = HTTP.serve!(router, args["server_port"])
+
+        end
+
         return e
+
     end
 
 end

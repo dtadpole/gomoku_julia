@@ -2,7 +2,7 @@ include("./game.jl")
 
 using Flux
 using CUDA
-using BSON: @save, @load
+using JLD
 using StatsBase
 
 # custom split layer
@@ -90,18 +90,19 @@ mutable struct Model
 
         """Save"""
         m.save = (path) -> begin
-            _size = m.size()
-            _channels = m.channels()
-            _model = m._model
-            @save path _size _channels _model
+            io = open(path, "w")
+            serialize(io, (m.size(), m.channels(), m._model))
+            close(io)
         end
 
         """Load"""
         m.load = (path) -> begin
-            @load path _size _channels _model
-            m._size = _size
-            m._channels = _channels
-            m._model = _model
+            io = open(path, "r")
+            size, channels, model = deserialize(io)
+            m._size = size
+            m._channels = channels
+            m._model = model
+            close(io)
         end
 
         """Clone"""
