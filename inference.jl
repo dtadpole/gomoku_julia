@@ -15,6 +15,7 @@ playout = () -> begin
 
     model = Model(_size, channels=_channels)
     model._model = _model
+    @info "Requested model from $(url) : $(model.size(), model.channels(), sum([length(l) for l in Flux.params(model._model)]))"
 
     experences = mcts_play_game(model)
 
