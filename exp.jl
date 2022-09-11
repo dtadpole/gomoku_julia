@@ -107,7 +107,7 @@ mutable struct Experiences
             router = HTTP.Router()
 
             # post a single game experience
-            HTTP.register!(router, "/experience", HTTP.Methods.POST, (req) -> begin
+            HTTP.register!(router, "POST", "/experience", (req) -> begin
                 body = HTTP.payload(req)
                 io = IOBuffer(body)
                 s, pi, v = deserialize(io)
@@ -116,7 +116,7 @@ mutable struct Experiences
             end)
 
             # post a list of game experiences
-            HTTP.register!(router, "/experiences", HTTP.Methods.POST, (req) -> begin
+            HTTP.register!(router, "POST", "/experiences", (req) -> begin
                 body = HTTP.payload(req)
                 io = IOBuffer(body)
                 experiences = deserialize(io)
@@ -127,14 +127,14 @@ mutable struct Experiences
             end)
 
             # download model
-            HTTP.register!(router, "/model", HTTP.Methods.GET, (req) -> begin
+            HTTP.register!(router, "GET", "/model", (req) -> begin
                 io = IOBuffer()
                 serialize(io, (e._model.size(), e._model.channels(), e._model._model))
                 return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
             end)
 
-            # start server
-            server = HTTP.serve!(router, args["server_port"])
+            # start server async
+            @async HTTP.serve(router, "0.0.0.0", args["exp_port"])
 
         end
 
