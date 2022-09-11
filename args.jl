@@ -26,6 +26,11 @@ function parse_commandline()
         arg_type = Int
         default = -1
 
+        "--model_loss_coef_entropy"
+        help = "model loss entropy coefficient"
+        arg_type = Float32
+        default = Float32(0.1)
+
         "--mcts_n"
         help = "mcts play count"
         arg_type = Int
@@ -50,6 +55,56 @@ function parse_commandline()
         help = "train batch size"
         arg_type = Int
         default = 64
+
+        "--train_batch_num"
+        help = "train batch number"
+        arg_type = Int
+        default = 64
+
+        "--train_epochs"
+        help = "train epochs"
+        arg_type = Int
+        default = 4
+
+        "--adamw_beta1"
+        help = "adamw beta1"
+        arg_type = Float32
+        default = Float32(0.9)
+
+        "--adamw_beta2"
+        help = "adamw beta2"
+        arg_type = Float32
+        default = Float32(0.999)
+
+        "--adamw_weight_decay"
+        help = "adamw weight decay"
+        arg_type = Float32
+        default = Float32(0.01)
+
+        "--learning_rate"
+        help = "learning rate"
+        arg_type = Float32
+        default = Float32(0.001)
+
+        "--learning_rate_range"
+        help = "learning rate range"
+        arg_type = Float32
+        default = Float32(5.0)
+
+        "--learning_kl_target"
+        help = "learning kl target"
+        arg_type = Float32
+        default = Float32(0.01)
+
+        "--experience_min"
+        help = "experience min"
+        arg_type = Int
+        default = 8_000
+
+        "--experience_max"
+        help = "experience max"
+        arg_type = Int
+        default = 400_000
 
     end
 
