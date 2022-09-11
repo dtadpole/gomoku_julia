@@ -28,7 +28,7 @@ infer_playout = () -> begin
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    while true
+    for in in 1:args["infer_playouts"]
         try
             infer_playout()
         catch e
