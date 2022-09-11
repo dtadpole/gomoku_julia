@@ -47,7 +47,7 @@ mutable struct Train
                     for epoch in 1:TRAIN_EPOCHS
 
                         # re-sample each epoch
-                        (states, pis, vs) = t._experien
+                        (states, pis, vs) = t._experiences.sampleExperience(BATCH_SIZE * BATCH_NUM)
 
                         # keeps previous policy
                         prev_policy, _ = t._model.forward(states)
