@@ -138,7 +138,7 @@ mutable struct Train
                         exp_trained_step += 1
 
                         # save model
-                        filename = "./model/trained_$(model.size()).curr"
+                        filename = "./model/trained_$(model.size())x$(model.size()).curr"
                         backup_file(filename)
                         t._model.save(filename)
 
