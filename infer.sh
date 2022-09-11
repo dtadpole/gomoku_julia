@@ -1,6 +1,6 @@
 #!/bin/bash
 
 while true ; do
-    julia ./inf.jl "$@"
+    julia ./infer.jl "$@"
     sleep 1
 done
