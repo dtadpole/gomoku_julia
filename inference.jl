@@ -14,7 +14,7 @@ playout = () -> begin
     _size, _channels, _model = deserialize(io)
 
     model = Model(_size, channels=_channels)
-    model._model = _model
+    Flux.loadmodel!(model._model, _model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
     @info "Requested model from $(url) : $(model.size()), $(model.channels()), $(params_size)"
 
