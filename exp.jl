@@ -79,7 +79,7 @@ mutable struct Experiences
 
             # target experience size
             target_exp_size = max(args["exp_min"], min(args["exp_max"],
-                floor(Int, (e._total_count - args["experience_min"]) / 2) + args["experience_min"]))
+                floor(Int, (e._total_count - args["exp_min"]) / 2) + args["exp_min"]))
 
             # truncate experiences
             if length(e._exp_list) > target_exp_size
