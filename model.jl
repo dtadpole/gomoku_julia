@@ -83,8 +83,8 @@ mutable struct Model
         """Loss"""
         m.loss = (x, pi, v) -> begin
             p_, v_ = m.forward(x)
-            panelty() = args["model_loss_theta_entropy"] * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
-            # panelty() = -args["model_loss_coef_entropy"] * sum(p_ .* log.(p_))
+            # panelty() = args["model_loss_theta_entropy"] * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
+            panelty() = -args["model_loss_coef_entropy"] * sum(p_ .* log.(p_))
             loss = sum((v - v_) .^ 2) - sum(pi .* log.(p_)) + panelty()
             return loss
         end
