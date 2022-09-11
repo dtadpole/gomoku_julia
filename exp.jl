@@ -148,5 +148,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
     # create model
     model = Model(args["game_size"], channels=args["model_channels"])
     e = Experiences(model)
+    e.startServer()
     e.playGame()
 end

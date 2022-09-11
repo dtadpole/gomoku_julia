@@ -19,6 +19,8 @@ mutable struct Train
 
         t = new(model, opt, Experiences(model))
 
+        t._experiences.startServer()
+
         if args["model_cuda"] >= 0
             t._opt = t._opt |> gpu
         end
