@@ -85,8 +85,8 @@ mutable struct Train
                             kl_list = vcat(kl_list, kl)
 
                             # check if kl divergence is too high, break early if so
-                            if kl_mean > 4 * args["train_kl_target"]
-                                @info "KL divergence [$(round(kl_mean, digits=4)) > 4 * $(args["train_kl_target"])] ... stopping early ."
+                            if kl_mean > 5 * args["train_kl_target"]
+                                @info "KL divergence [$(round(kl_mean, digits=4)) > 5 * $(args["train_kl_target"])] ... stopping early ."
                                 break
                             end
 
