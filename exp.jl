@@ -26,11 +26,14 @@ mutable struct Experiences
     _model::Model
     _exp_list::Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}
     _total_count::Int
+    _trained_count::Int
 
     # functions
     size::Function
     length::Function
     totalCount::Function
+    trainedCount::Function
+    addTrainedCount::Function
     playGame::Function
     addExperience::Function
     sampleExperience::Function
@@ -51,8 +54,16 @@ mutable struct Experiences
         """Length"""
         e.length = () -> length(e._exp_list)
 
-        """Total size"""
+        """Total count"""
         e.totalCount = () -> e._total_count
+
+        """Trained count"""
+        e.trainedCount = () -> e._trained_count
+
+        """Add to trained count"""
+        e.addTrainedCount = (count) -> begin
+            e._trained_count += count
+        end
 
         """Play game"""
         e.playGame = () -> begin
@@ -149,15 +160,16 @@ mutable struct Experiences
         """Save"""
         e.save = (path) -> begin
             io = open(path, "w")
-            serialize(io, (e._total_count, e._exp_list))
+            serialize(io, (e._total_count, e._trained_count, e._exp_list))
             close(io)
         end
 
         """Load"""
         e.load = (path) -> begin
             io = open(path, "r")
-            total_count, exp_list = deserialize(io)
+            total_count, trained_count, exp_list = deserialize(io)
             e._total_count = total_count
+            e._trained_count = trained_count
             e._exp_list = exp_list
             close(io)
         end

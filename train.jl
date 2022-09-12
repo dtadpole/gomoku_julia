@@ -75,9 +75,6 @@ mutable struct Train
             BATCH_NUM = args["train_batch_num"]
             TRAIN_EPOCHS = args["train_epochs"]
 
-            exp_trained_count = 0
-            exp_trained_step = 0
-
             lr_multiplier = 1.0
 
             while true
@@ -86,7 +83,7 @@ mutable struct Train
 
                     # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
-                    if exp_trained_count + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount() * TRAIN_EPOCHS
+                    if t._experiences.trainedCount() + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount() * TRAIN_EPOCHS
 
                         for epoch in 1:TRAIN_EPOCHS
 
@@ -105,7 +102,7 @@ mutable struct Train
                             v_list = Vector{Float32}()
                             panelty_list = Vector{Float32}()
 
-                            @info "Training epoch [$(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
+                            @info "Training epoch [$(epoch)] started [$(t._experiences.trainedCount()) / $(t._experiences.totalCount())] ..."
 
                             for batch in 1:BATCH_NUM
 
@@ -122,7 +119,7 @@ mutable struct Train
 
                                 Flux.Optimise.update!(t._opt, params, grads)
 
-                                exp_trained_count += BATCH_SIZE
+                                t._experiences.addTrainedCount(BATCH_SIZE)
 
                                 # calculate new policy
                                 new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._model.loss(state, pa, v)
@@ -156,7 +153,7 @@ mutable struct Train
                             v_epoch = round(mean(v_list), digits=4)
                             panelty_epoch = round(mean(panelty_list), digits=4)
 
-                            @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss : $(loss_epoch) = ($(pi_epoch),pi) + ($(v_epoch),v) + ($(panelty_epoch),panelty)]"
+                            @info "Training epoch [$(epoch)] updated [$(t._experiences.trainedCount()) / $(t._experiences.totalCount())] [loss : $(loss_epoch) = ($(pi_epoch),pi) + ($(v_epoch),v) + ($(panelty_epoch),panelty)]"
                             # @info loss_list pi_list v_list panelty_list
 
                             # check for kl divergence
@@ -181,8 +178,6 @@ mutable struct Train
 
                         end
 
-                        exp_trained_step += 1
-
                         # print separator
                         @info repeat("-", 50)
 
@@ -206,7 +201,7 @@ mutable struct Train
 
                     else
 
-                        @info "Training is waiting for more experience [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
+                        @info "Training is waiting for more experience [$(t._experiences.trainedCount()) / $(t._experiences.totalCount())] ..."
 
                     end
 
