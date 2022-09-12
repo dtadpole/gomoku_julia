@@ -140,7 +140,7 @@ function eval_run()
 
     for i in 1:args["eval_playouts"]
         try
-            @info "Evaluation iteration [$(i)]"
+            @info "Evaluation iteration [$(i)] - [$(args["player_1"])] vs [$(args["player_2"])]"
             score = eval_playout(player1_function, player2_function, turn=rand() > 0.5 ? 1.0 : -1.0)
             if score > 0
                 player_1_wins += 1
@@ -157,7 +157,7 @@ function eval_run()
         end
     end
 
-    @info "[$(titlecase(args["player_1"])) : $(player_1_wins)] vs [$(titlecase(args["player_2"])) : $(player_2_wins)] - [$(draws) draws]"
+    @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] - [$(draws) draws]"
     if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
         @info "Replacing best model with current model"
         backup_file("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
