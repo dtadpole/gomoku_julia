@@ -39,6 +39,8 @@ mutable struct Experiences
     # constructor
     function Experiences(model::Model)
 
+        global _WEIGHTS
+
         e = new(model, Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}(), 0)
 
         """Size"""
@@ -91,7 +93,7 @@ mutable struct Experiences
 
         """Sample experience"""
         e.sampleExperience = (sample_size::Int) -> begin
-            s, pi, v = unzip(sample(e._exp_list, ProbabilityWeights(w[1:length(e._exp_list)]), sample_size))
+            s, pi, v = unzip(sample(e._exp_list, ProbabilityWeights(_WEIGHTS[1:length(e._exp_list)]), sample_size))
             s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
             pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
             v = reshape(cat(v...; dims=2), (1, sample_size))
