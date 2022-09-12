@@ -2,5 +2,5 @@
 
 while true ; do
     julia ./eval.jl "$@"
-    sleep 1
+    sleep 15
 done
