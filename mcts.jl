@@ -68,7 +68,7 @@ mutable struct MctsNode
         end
 
         """Node Value : Q(S,a) + cpuct * P(S,a) * sqrt(sum(N(S,x) for x in siblings)) / (1 + N(S,a))"""
-        node.nodeValue = () -> node._Q + node._cpuct * node._P * sqrt(node._parent.N) / (1 + node._N)
+        node.nodeValue = () -> node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
 
         """Update branch"""
         node.updateBranch = (v::Float32) -> begin
