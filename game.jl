@@ -27,7 +27,7 @@ mutable struct Game
 
     # constructor
     function Game(size::Int; turn=1.0)
-        g = new(size, turn, zeros(Float32, size, size), (0, 0), false)
+        g = new(size, sign(turn), zeros(Float32, size, size), (0, 0), false)
 
         """Size"""
         g.size = () -> g._size

@@ -126,6 +126,18 @@ function parse_commandline()
         arg_type = Int
         default = 10
 
+        "--player_1"
+        help = "player 1"
+        arg_type = String
+        range_tester = (x -> x ∈ ["curr", "best", "human"])
+        default = "curr"
+
+        "--player_2"
+        help = "player 2"
+        arg_type = String
+        range_tester = (x -> x ∈ ["curr", "best", "human"])
+        default = "best"
+
     end
 
     return parse_args(s)
