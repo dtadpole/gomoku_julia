@@ -99,23 +99,23 @@ mutable struct Train
                             @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] ."
 
                             # check for kl divergence
-                            kl_mean = mean(kl_list)
+                            kl_epoch_mean = mean(kl_list)
 
-                            if kl_mean > args["train_kl_target"] * 2.0 && lr_multiplier > 1.0 / args["learning_rate_range"]
+                            if kl_epoch_mean > args["train_kl_target"] * 2.0 && lr_multiplier > 1.0 / args["learning_rate_range"]
                                 lr_multiplier /= 1.5
                                 new_learning_rate = args["learning_rate"] * lr_multiplier
-                                @info "KL divergence [$(round(kl_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=5))] ."
+                                @info "KL divergence [$(round(kl_epoch_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=5))] ."
                                 # update learning rate
                                 t._opt[1].eta = new_learning_rate
-                            elseif kl_mean < args["train_kl_target"] / 2.0 && lr_multiplier < args["learning_rate_range"]
+                            elseif kl_epoch_mean < args["train_kl_target"] / 2.0 && lr_multiplier < args["learning_rate_range"]
                                 lr_multiplier *= 1.5
                                 new_learning_rate = args["learning_rate"] * lr_multiplier
-                                @info "KL divergence [$(round(kl_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=5))] ."
+                                @info "KL divergence [$(round(kl_epoch_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=5))] ."
                                 # update learning rate
                                 t._opt[1].eta = new_learning_rate
                             else
                                 new_learning_rate = args["learning_rate"] * lr_multiplier
-                                @info "KL divergence [$(round(kl_mean, digits=4)) within range] ... keeping learning rate as [$(round(new_learning_rate, digits=5))] ."
+                                @info "KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(new_learning_rate, digits=5))] ."
                             end
 
                         end
