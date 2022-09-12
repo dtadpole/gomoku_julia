@@ -152,6 +152,7 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     model = Model(args["game_size"], channels=args["model_channels"])
     opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
+    @info opt
     train = Train(model, opt)
     train.train()
 end

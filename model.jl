@@ -70,15 +70,15 @@ mutable struct Model
             Conv((3, 3), channels * 4 => channels * 4, relu; pad=(1, 1), bias=false),
             Split(
                 Chain(
-                    Conv((1, 1), channels * 4 => div(channels, 2), relu),
-                    x -> reshape(x, (div(channels, 2) * size * size, :)),
-                    Dense(div(channels, 2) * size * size => size * size, relu),
+                    Conv((1, 1), channels * 4 => channels, relu),
+                    x -> reshape(x, (channels * size * size, :)),
+                    Dense(channels * size * size => size * size, relu),
                     softmax
                 ),
                 Chain(
-                    Conv((1, 1), channels * 4 => div(channels, 2), relu),
-                    x -> reshape(x, (div(channels, 2) * size * size, :)),
-                    Dense(div(channels, 2) * size * size => channels * 2, relu),
+                    Conv((1, 1), channels * 4 => channels, relu),
+                    x -> reshape(x, (channels * size * size, :)),
+                    Dense(channels * size * size => channels * 2, relu),
                     Dense(channels * 2 => 1, tanh)
                 )
             )
