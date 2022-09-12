@@ -5,7 +5,7 @@ mutable struct MctsNode
     # attributes
     _game::Game
     _model::Model
-    _ucb::Float32
+    _cpuct::Float32
     _gamma::Float32
     _parent::Union{MctsNode,Nothing}
     _children::Union{Array{Union{MctsNode,Nothing},1},Nothing}
@@ -28,9 +28,9 @@ mutable struct MctsNode
     rootV::Function
 
     # constructor
-    function MctsNode(game::Game, model::Model; ucb=5.0, gamma=0.98, parent=nothing, P=0.0)
+    function MctsNode(game::Game, model::Model; cpuct=3.0, gamma=0.98, parent=nothing, P=0.0)
 
-        node = new(game, model, ucb, gamma, parent, nothing, 0, P, 0.0)
+        node = new(game, model, cpuct, gamma, parent, nothing, 0, P, 0.0)
 
         """Size"""
         node.size = () -> node._game.size()
@@ -62,13 +62,13 @@ mutable struct MctsNode
                 if Pa[i] > 0.0
                     game = node._game.clone()
                     game.play_action(i)
-                    node._children[i] = MctsNode(game, node._model; ucb=node._ucb, gamma=node._gamma, parent=node, P=Pa[i])
+                    node._children[i] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=Pa[i])
                 end
             end
         end
 
-        """Node Value : Q(S,a) + ucb * P(S,a) / (1 + N(S,a))"""
-        node.nodeValue = () -> node._Q + node._ucb * node._P / (1 + node._N)
+        """Node Value : Q(S,a) + cpuct * P(S,a) * sqrt(sum(N(S,x) for x in siblings)) / (1 + N(S,a))"""
+        node.nodeValue = () -> node._Q + node._cpuct * node._P * sqrt(node._parent.N) / (1 + node._N)
 
         """Update branch"""
         node.updateBranch = (v::Float32) -> begin
@@ -131,7 +131,7 @@ function mcts_play_game(model::Model)
     game = Game(model.size(), turn=game_turn)
 
     # create mcts node
-    node = MctsNode(game, model; ucb=args["mcts_ucb"], gamma=args["mcts_gamma"])
+    node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
 
     while !game.is_over()
 

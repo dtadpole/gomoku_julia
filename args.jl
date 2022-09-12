@@ -41,10 +41,10 @@ function parse_commandline()
         arg_type = Int
         default = 200
 
-        "--mcts_ucb"
-        help = "mcts ucb"
+        "--mcts_cpuct"
+        help = "mcts cpuct"
         arg_type = Float32
-        default = Float32(5.0)
+        default = Float32(3.0)
 
         "--mcts_gamma"
         help = "mcts gamma"
