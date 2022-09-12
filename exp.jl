@@ -46,7 +46,7 @@ mutable struct Experiences
 
         global _WEIGHTS
 
-        e = new(model, Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}(), 0)
+        e = new(model, Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}(), 0, 0)
 
         """Size"""
         e.size = () -> e._model.size()
