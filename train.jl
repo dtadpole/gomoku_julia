@@ -151,8 +151,10 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     model = Model(args["game_size"], channels=args["model_channels"])
+    params_size = sum([length(l) for l in Flux.params(model._model)])
+    @info "[Model] [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
     opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
-    @info opt
+    @info "[Optimizer] $(opt)"
     train = Train(model, opt)
     train.train()
 end
