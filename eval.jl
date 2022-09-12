@@ -3,6 +3,8 @@ include("./mcts.jl")
 
 function model_step(game::Game, model::Model)
 
+    TEMPERATURE = args["mcts_temperature"]
+
     # create mcts node
     node = MctsNode(game, model; ucb=args["mcts_ucb"], gamma=args["mcts_gamma"])
 
