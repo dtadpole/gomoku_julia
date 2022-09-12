@@ -17,6 +17,21 @@ Flux.@functor Split
 
 (m::Split)(x::AbstractArray) = map(f -> f(x), m.paths)
 
+function backup_file(filename)
+    filename_bak = "$(filename).bak"
+    filename_bak_bak = "$(filename_bak).bak"
+    if isfile(filename_bak_bak)
+        mv(filename_bak_bak, "$(filename_bak_bak).bak", force=true)
+    end
+    if isfile(filename_bak)
+        mv(filename_bak, filename_bak_bak, force=true)
+    end
+    if isfile(filename)
+        mv(filename, filename_bak, force=true)
+    end
+    return nothing
+end
+
 
 # model
 mutable struct Model

@@ -73,7 +73,7 @@ function player_function(player::String)
         filename = "./model/trained_$(args["game_size"])x$(args["game_size"]).curr"
         model = Model(args["game_size"], channels=args["model_channels"])
         model.load(filename)
-        return (game) -> model_step(game, model)
+        return (game) -> model_step(game, model), model
 
     elseif player == "best"
 
@@ -83,11 +83,11 @@ function player_function(player::String)
             # load model if best file exist
             model.load(filename)
         end
-        return (game) -> model_step(game, model)
+        return (game) -> model_step(game, model), model
 
     elseif player == "human"
 
-        return human_step
+        return human_step, nothing
 
     else
 
@@ -96,15 +96,12 @@ function player_function(player::String)
     end
 end
 
-function play_game(player1::String, player2::String; turn=1.0)
+function eval_playout(player1_function::Function, player2_function::Function; turn=1.0)
 
     game = Game(args["game_size"], turn=turn)
     if args["game_display"]
         game.display()
     end
-
-    player1_function = player_function(player1)
-    player2_function = player_function(player2)
 
     if turn < 0
         player2_function(game)
@@ -121,17 +118,56 @@ function play_game(player1::String, player2::String; turn=1.0)
     end
 
     if game.score() > 0
-        @info "[$(titlecase(player1))] wins !  [ X ]"
+        @info "[ X ] wins !"
     elseif game.score() < 0
-        @info "[$(titlecase(player2))] wins !  [ O ]"
+        @info "[ O ] wins !"
     else
         @info "Draw!"
     end
 
+    return game.score()
+
 end
 
+function eval_run()
+
+    player_1_wins = 0
+    player_2_wins = 0
+    draws = 0
+
+    player1_function, model_1 = player_function(args["player_1"])
+    player2_function, model_2 = player_function(args["player_2"])
+
+    for i in 1:args["eval_playouts"]
+        try
+            @info "Evaluation iteration [$(i)]"
+            score = eval_playout(player1_function, player2_function, turn=rand() > 0.5 ? 1.0 : -1.0)
+            if score > 0
+                player_1_wins += 1
+            elseif score < 0
+                player_2_wins += 1
+            else
+                draws += 1
+            end
+        catch e
+            @error "Error" exception = (e, catch_backtrace())
+            sleep(1.4^(i - 1))
+        finally
+            sleep(1)
+        end
+    end
+
+    @info "[$(titlecase(args["player_1"])) : $(player_1_wins)] vs [$(titlecase(args["player_2"])) : $(player_2_wins)] - [$(draws) draws]"
+    if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
+        @info "Replacing best model with current model"
+        backup_file("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
+        model_1.save("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
+        @info "Replaced best model with current model"
+    end
+
+end
+
+
 if abspath(PROGRAM_FILE) == @__FILE__
-
-    play_game(args["player_1"], args["player_2"], turn=rand() > 0.5 ? 1.0 : -1.0)
-
+    eval_run()
 end

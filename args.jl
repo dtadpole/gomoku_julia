@@ -126,6 +126,11 @@ function parse_commandline()
         arg_type = Int
         default = 10
 
+        "--eval_playouts"
+        help = "eval playout count"
+        arg_type = Int
+        default = 10
+
         "--player_1"
         help = "player 1"
         arg_type = String
