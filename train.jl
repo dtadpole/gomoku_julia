@@ -62,7 +62,7 @@ mutable struct Train
                             # keeps a list of loss
                             loss_list = Vector{Float32}()
 
-                            @info "Training epoch $(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
+                            @info "Training epoch [$(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
 
                             for batch in 1:BATCH_NUM
 
@@ -102,7 +102,7 @@ mutable struct Train
 
                             end
 
-                            @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(round(mean(loss_list), digits=4))]"
+                            @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(round(mean(loss_list), digits=4))]"
 
                             # check for kl divergence
                             kl_epoch_mean = mean(kl_list)
