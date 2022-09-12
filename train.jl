@@ -226,6 +226,7 @@ mutable struct Train
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
+    @info repeat("=", 50)
     # model
     model = Model(args["game_size"], channels=args["model_channels"])
     params_size = sum([length(l) for l in Flux.params(model._model)])
