@@ -85,7 +85,7 @@ mutable struct Train
                                 exp_trained_count += BATCH_SIZE
 
                                 # calculate new policy
-                                new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._model.loss(state, pi, v)
+                                new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._model.loss(state, pa, v)
 
                                 # keep track of loss
                                 push!(loss_list, new_loss |> cpu)
