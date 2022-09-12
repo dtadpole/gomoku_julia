@@ -31,7 +31,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
 
     for i in 1:args["infer_playouts"]
         try
-            @info "Inference iteration [$(i)]"
+            @info "Inference Iteration [$(i)]"
             infer_playout()
         catch e
             @error "Error" exception = (e, catch_backtrace())
