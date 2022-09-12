@@ -61,6 +61,9 @@ mutable struct Train
 
                             # keeps a list of loss
                             loss_list = Vector{Float32}()
+                            pi_list = Vector{Float32}()
+                            v_list = Vector{Float32}()
+                            panelty_list = Vector{Float32}()
 
                             @info "Training epoch [$(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
 
@@ -79,10 +82,13 @@ mutable struct Train
                                 exp_trained_count += BATCH_SIZE
 
                                 # calculate new policy
-                                new_loss, new_pi, _ = t._model.loss(state, pi, v)
+                                new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._model.loss(state, pi, v)
 
                                 # keep track of loss
                                 push!(loss_list, new_loss |> cpu)
+                                push!(pi_list, loss_pi |> cpu)
+                                push!(v_list, loss_v |> cpu)
+                                push!(panelty_list, loss_panelty |> cpu)
 
                                 # extract prev policy
                                 prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
@@ -102,7 +108,12 @@ mutable struct Train
 
                             end
 
-                            @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(round(mean(loss_list), digits=4))]"
+                            loss_epoch = mean(loss_list)
+                            pi_epoch = mean(pi_list)
+                            v_epoch = mean(v_list)
+                            panelty_epoch = mean(panelty_list)
+
+                            @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(loss_epoch), pi = $(pi_epoch), v = $(v_epoch), panelty = $(panelty_epoch)]"
 
                             # check for kl divergence
                             kl_epoch_mean = mean(kl_list)
