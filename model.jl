@@ -74,8 +74,8 @@ mutable struct Model
                     x -> reshape(x, (div(channels, 2) * size * size, :)),
                     Dropout(0.5),
                     Dense(div(channels, 2) * size * size => size * size, relu),
-                    x -> log.(x + 1e-8), # add log layer
-                    softmax # softmax layer applies to only dims=1
+                    # x -> log.(x + 1e-8), # add log layer
+                    # softmax # softmax layer applies to only dims=1
                 ),
                 Chain(
                     Conv((1, 1), channels * 4 => div(channels, 2), relu),
@@ -95,11 +95,11 @@ mutable struct Model
 
         """Forward pass"""
         m.forward = (x) -> begin
-            # [IMPORTANT] policy head add log layer before softmax - improves gradient back propagation !!
             p, v = m._model(x)
-            return p, v
-            # return softmax(log.(p .+ 1e-8), dims=1), v
+            # [IMPORTANT] policy head add log layer before softmax - improves gradient back propagation !!
+            return softmax(log.(p .+ 1e-8), dims=1), v
             # return softmax(p, dims=1), v
+            # return p, v
         end
 
         """returns (loss, p_, v_)"""
