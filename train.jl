@@ -34,7 +34,7 @@ mutable struct Train
         # load model if exists
         model_filename = "./model/trained_$(model.size())x$(model.size()).curr"
         if isfile(model_filename)
-            @info repeat("=", 50)
+            @info repeat("-", 50)
             @info "Loading Model from [$(model_filename)] ..."
             model.load(model_filename)
             @info "Loaded Model [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
@@ -43,7 +43,7 @@ mutable struct Train
         # load optimizer if exists
         opt_filename = "./model/opt_$(model.size())x$(model.size()).opt"
         if isfile(opt_filename)
-            @info repeat("=", 50)
+            @info repeat("-", 50)
             @info "Loading Optimizer from [$(opt_filename)] ..."
             t._opt = load_optimizer(opt_filename)
             @info "Loaded Optimizer [η=$(t._opt[1].eta), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)]"
@@ -52,7 +52,7 @@ mutable struct Train
         # load experiences if exists
         exp_filename = "./model/exp_$(model.size())x$(model.size()).curr"
         if isfile(exp_filename)
-            @info repeat("=", 50)
+            @info repeat("-", 50)
             @info "Loading Experiences from [$(exp_filename)] ..."
             t._experiences.load(exp_filename)
             @info "Loaded Experiences [$(t._experiences.totalCount())]"
