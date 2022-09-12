@@ -64,7 +64,7 @@ function parse_commandline()
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 8
+        default = 4
 
         "--train_epochs"
         help = "train epochs"
