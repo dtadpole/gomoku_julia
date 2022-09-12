@@ -124,7 +124,7 @@ function parse_commandline()
         "--infer_playouts"
         help = "infer playout count"
         arg_type = Int
-        default = 10
+        default = 20
 
         "--eval_playouts"
         help = "eval playout count"
