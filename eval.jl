@@ -81,6 +81,7 @@ function player_function(player::String)
         filename = "./model/trained_$(args["game_size"])x$(args["game_size"]).curr"
         model = Model(args["game_size"], channels=args["model_channels"])
         model.load(filename)
+        testmode!(model)
         return (game) -> model_step(game, model), model
 
     elseif player == "best"
@@ -91,6 +92,7 @@ function player_function(player::String)
             # load model if best file exist
             model.load(filename)
         end
+        testmode!(model)
         return (game) -> model_step(game, model), model
 
     elseif player == "human"

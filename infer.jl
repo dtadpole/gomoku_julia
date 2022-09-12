@@ -15,6 +15,7 @@ infer_playout = () -> begin
 
     model = Model(_size, channels=_channels)
     Flux.loadmodel!(model._model, _model)
+    testmode!(model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
     @info "Requested model from $(url) : $(model.size()), $(model.channels()), $(params_size)"
 

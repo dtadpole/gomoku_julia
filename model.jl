@@ -72,14 +72,17 @@ mutable struct Model
                 Chain(
                     Conv((1, 1), channels * 4 => channels, relu),
                     x -> reshape(x, (channels * size * size, :)),
+                    Dropout(0.5),
                     Dense(channels * size * size => size * size, relu),
                     softmax
                 ),
                 Chain(
                     Conv((1, 1), channels * 4 => channels, relu),
                     x -> reshape(x, (channels * size * size, :)),
-                    Dense(channels * size * size => channels * 2, relu),
-                    Dense(channels * 2 => 1, tanh)
+                    Dropout(0.5),
+                    Dense(channels * size * size => channels * 4, relu),
+                    Dropout(0.5),
+                    Dense(channels * 4 => 1, tanh)
                 )
             )
         )
