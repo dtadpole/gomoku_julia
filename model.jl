@@ -74,6 +74,7 @@ mutable struct Model
                     x -> reshape(x, (div(channels, 2) * size * size, :)),
                     Dropout(0.5),
                     Dense(div(channels, 2) * size * size => size * size, relu),
+                    # log, # add log layer
                     softmax
                 ),
                 Chain(
