@@ -121,11 +121,11 @@ function play_game(player1::String, player2::String; turn=1.0)
     end
 
     if game.score() > 0
-        @info "[$(player1)] wins. [X]"
+        @info "[$(player1)] wins! [X]"
     elseif game.score() < 0
-        @info "[$(player2)] wins. [O]"
+        @info "[$(player2)] wins! [O]"
     else
-        @info "Draw"
+        @info "Draw!"
     end
 
 end
