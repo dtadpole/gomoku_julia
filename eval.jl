@@ -120,7 +120,13 @@ function play_game(player1::String, player2::String; turn=1.0)
 
     end
 
-    @info "[$(game._board[game._last_move[1], game._last_move[2]])] wins"
+    if game.score() > 0
+        @info "[$(player1)] wins. [X]"
+    elseif game.score() < 0
+        @info "[$(player2)] wins. [O]"
+    else
+        @info "Draw"
+    end
 
 end
 
