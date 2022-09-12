@@ -18,8 +18,13 @@ function model_step(game::Game, model::Model)
 
     # policy distribution
     pa = reshape(node.rootN(), (model.size() * model.size()))
-    pa = pa .* game.available_actions()
-    action = argmax(pa) # chooce max policy probability
+    if TEMPERATURE > 1e-4
+        pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
+        action = sample(1:model.size()^2, StatsBase.ProbabilityWeights(pa))
+    else
+        pa = pa .* game.available_actions()
+        action = argmax(pa)
+    end
 
     # play action
     game.play_action(action)
@@ -28,6 +33,7 @@ function model_step(game::Game, model::Model)
         # display
         game.display()
     end
+
 
     return nothing
 
