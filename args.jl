@@ -129,7 +129,7 @@ function parse_commandline()
         "--eval_playouts"
         help = "eval playout count"
         arg_type = Int
-        default = 10
+        default = 12
 
         "--player_1"
         help = "player 1"
