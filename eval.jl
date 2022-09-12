@@ -120,6 +120,6 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
 
-    play_game(args["player_1"], args["player_2"])
+    play_game(args["player_1"], args["player_2"], turn=rand() > 0.5 ? 1.0 : -1.0)
 
 end
