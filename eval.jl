@@ -148,7 +148,7 @@ function eval_run()
 
     for i in 1:args["eval_playouts"]
         try
-            @info "Evaluation Iteration [$(i)] - [$(args["player_1"]) : X] vs [$(args["player_2"]) : O]"
+            @info "Evaluation Iteration [$(i)] : [$(args["player_1"]) -> X] vs [$(args["player_2"]) -> O]"
             score = eval_playout(player1_function, player2_function, turn=rand() > 0.5 ? 1.0 : -1.0)
             if score > 0
                 player_1_wins += 1
@@ -166,7 +166,7 @@ function eval_run()
     end
 
     @info repeat("=", 50)
-    @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] - [$(draws) draws]"
+    @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
     @info repeat("=", 50)
     if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
         @info "Replacing best model with current model ..."
