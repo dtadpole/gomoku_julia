@@ -140,7 +140,7 @@ mutable struct Experiences
             # start server async
             @async HTTP.serve(router, "0.0.0.0", args["exp_port"])
             @info "Experience server started on port [$(args["exp_port"])]"
-            @info "Run [infer.sh] to start generating experiences ..."
+            @info "Run [infer.sh] to generate experiences ..."
 
         end
 
