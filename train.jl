@@ -179,6 +179,9 @@ mutable struct Train
 
                         exp_trained_step += 1
 
+                        # print separator
+                        @info repeat("-", 50)
+
                         # save model
                         @info "Saving model to [$(model_filename)] ..."
                         backup_file(model_filename)
