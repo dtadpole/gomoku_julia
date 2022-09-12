@@ -33,6 +33,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
         try
             @info repeat("-", 50)
             @info "Inference Iteration [$(i)]"
+            @info repeat("-", 50)
             infer_playout()
         catch e
             @error "Error" exception = (e, catch_backtrace())
