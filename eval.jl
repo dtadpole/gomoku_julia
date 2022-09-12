@@ -159,10 +159,10 @@ function eval_run()
 
     @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] - [$(draws) draws]"
     if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
-        @info "Replacing best model with current model"
+        @info "Replacing best model with current model ..."
         backup_file("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
         model_1.save("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
-        @info "Replaced best model with current model"
+        @info "Replaced best model with current model !"
     end
 
 end
