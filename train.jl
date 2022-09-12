@@ -153,7 +153,7 @@ mutable struct Train
                             v_epoch = round(mean(v_list), digits=4)
                             panelty_epoch = round(mean(panelty_list), digits=4)
 
-                            @info "Training epoch [$(epoch)] updated [$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] [loss : $(loss_epoch) = ($(pi_epoch),pi) + ($(v_epoch),v) + ($(panelty_epoch),panelty)]"
+                            @info "Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),pi) + ($(v_epoch),v) + ($(panelty_epoch),panelty)]"
                             # @info loss_list pi_list v_list panelty_list
 
                             # check for kl divergence
