@@ -36,7 +36,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
             infer_playout()
         catch e
             @error "Error" exception = (e, catch_backtrace())
-            sleep(1.4^(i - 1))
+            sleep(1.2^(i - 1))
         finally
             sleep(1)
         end
