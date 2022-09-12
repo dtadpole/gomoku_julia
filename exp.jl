@@ -18,6 +18,8 @@ flip = (a::Matrix; dims = 2) -> begin
     reverse(a, dims=dims)
 end
 
+const _WEIGHTS = 1:floor(Int, args["exp_max"] * 2)
+
 mutable struct Experiences
 
     # attributes
@@ -89,7 +91,7 @@ mutable struct Experiences
 
         """Sample experience"""
         e.sampleExperience = (sample_size::Int) -> begin
-            s, pi, v = unzip(sample(e._exp_list, sample_size))
+            s, pi, v = unzip(sample(e._exp_list, ProbabilityWeights(w[1:length(e._exp_list)]), sample_size))
             s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
             pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
             v = reshape(cat(v...; dims=2), (1, sample_size))
