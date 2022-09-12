@@ -201,7 +201,7 @@ mutable struct Train
 
                     else
 
-                        @info "Training is waiting for more experience [$(t._experiences.trainedCount()) / $(t._experiences.totalCount())] ..."
+                        @info "Training is waiting for more experiences [$(t._experiences.trainedCount()) / $(t._experiences.totalCount())] ..."
 
                     end
 
