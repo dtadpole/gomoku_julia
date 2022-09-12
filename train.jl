@@ -44,7 +44,7 @@ mutable struct Train
         if isfile(opt_filename)
             @info "Loading optimizer from [$(opt_filename)] ..."
             t._opt = load_optimizer(opt_filename)
-            @info "Loaded Optimizer $(t._opt)"
+            @info "Loaded Optimizer [η=$(t._opt[1].eta), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)]"
         end
 
         # load experiences if exists
@@ -233,7 +233,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @info "[Model] [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
     # optimizer
     opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
-    @info "[Optimizer] $(opt)"
+    @info "[Optimizer] [η=$(opt[1].eta), β=$(opt[1].beta), decay=$(opt[2].wd)]"
     # start training
     train = Train(model, opt)
     train.train()
