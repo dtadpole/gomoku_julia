@@ -55,7 +55,7 @@ mutable struct Train
             @info repeat("-", 50)
             @info "Loading Experiences from [$(exp_filename)] ..."
             t._experiences.load(exp_filename)
-            @info "Loaded Experiences [$(t._experiences.totalCount())]"
+            @info "Loaded Experiences [$(t._experiences.totalCount()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())]"
         end
 
         @info repeat("=", 50)
