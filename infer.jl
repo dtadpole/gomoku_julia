@@ -31,6 +31,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
 
     for i in 1:args["infer_playouts"]
         try
+            @info repeat("-", 50)
             @info "Inference Iteration [$(i)]"
             infer_playout()
         catch e
