@@ -108,7 +108,7 @@ end
 
 function eval_playout(player1_function::Function, player2_function::Function; turn=1.0)
 
-    game = Game(args["game_size"], turn=turn)
+    game = Game(args["game_size"]; turn=turn)
     if args["game_display"]
         game.display()
     end
