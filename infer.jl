@@ -33,7 +33,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     for i in 1:args["infer_playouts"]
         try
             @info repeat("-", 50)
-            @info "Inference Iteration [$(i)]"
+            @info "Inference Iteration [$(i)] Starting ..."
             @info repeat("-", 50)
             infer_playout()
         catch e
@@ -44,4 +44,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
         end
     end
 
+    @info repeat("-", 50)
+    @info "Inference Completed : [$(args["infer_playouts"])] Iterations ."
+    @info repeat("-", 50)
 end
