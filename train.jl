@@ -111,16 +111,16 @@ mutable struct Train
 
                             end
 
-                            loss_epoch = mean(loss_list)
-                            pi_epoch = mean(pi_list)
-                            v_epoch = mean(v_list)
-                            panelty_epoch = mean(panelty_list)
+                            loss_epoch = round(mean(loss_list), digits=4)
+                            pi_epoch = round(mean(pi_list), digits=4)
+                            v_epoch = round(mean(v_list), digits=4)
+                            panelty_epoch = round(mean(panelty_list), digits=4)
 
-                            @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(loss_epoch), pi = $(pi_epoch), v = $(v_epoch), panelty = $(panelty_epoch)]"
-                            @info loss_list
-                            @info pi_list
-                            @info v_list
-                            @info panelty_list
+                            @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(loss_epoch) : pi->$(pi_epoch) + v->$(v_epoch) + panelty->$(panelty_epoch)]"
+                            @info "loss" loss_list
+                            @info "loss_pi" pi_list
+                            @info "loss_v" v_list
+                            @info "loss_panelty" panelty_list
 
                             # check for kl divergence
                             kl_epoch_mean = mean(kl_list)
