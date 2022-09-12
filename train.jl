@@ -59,6 +59,9 @@ mutable struct Train
                             # keeps a list of kl divergence
                             kl_list = Vector{Float32}()
 
+                            # keeps a list of loss
+                            loss_list = Vector{Float32}()
+
                             @info "Training epoch $(epoch)] started [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
 
                             for batch in 1:BATCH_NUM
@@ -67,7 +70,7 @@ mutable struct Train
                                 pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
                                 v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
-                                lossF = () -> t._model.loss(state, pi, v)
+                                lossF = () -> t._model.loss(state, pi, v)[1]
                                 params = t._model.params()
                                 grads = gradient(lossF, params)
 
@@ -76,7 +79,10 @@ mutable struct Train
                                 exp_trained_count += BATCH_SIZE
 
                                 # calculate new policy
-                                new_pi, _ = t._model.forward(state)
+                                new_loss, new_pi, _ = t._model.loss(state, pi, v)
+
+                                # keep track of loss
+                                push!(loss_list, new_loss |> cpu)
 
                                 # extract prev policy
                                 prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
@@ -96,7 +102,7 @@ mutable struct Train
 
                             end
 
-                            @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] ."
+                            @info "Training epoch $(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(round(mean(loss_list), digits=4))]"
 
                             # check for kl divergence
                             kl_epoch_mean = mean(kl_list)

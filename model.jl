@@ -101,13 +101,14 @@ mutable struct Model
             # return softmax(p, dims=1), v
         end
 
-        """Loss"""
+        """returns (loss, p_, v_)"""
         m.loss = (x, pi, v) -> begin
             p_, v_ = m.forward(x)
             # panelty() = args["model_loss_theta_entropy"] * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
             panelty() = -args["model_loss_coef_entropy"] * sum(p_ .* log.(p_), dims=1)
             loss = (v - v_) .^ 2 .- sum(pi .* log.(p_), dims=1) .+ panelty() # calculate loss for each sample in the batch
-            return mean(loss) # reduce mean
+            # reduce mean for loss
+            return mean(loss), p_, v_
         end
 
         """Save"""
