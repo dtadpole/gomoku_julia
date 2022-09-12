@@ -114,6 +114,10 @@ mutable struct Train
                             panelty_epoch = mean(panelty_list)
 
                             @info "Training epoch [$(epoch)] updated [$(exp_trained_count) / $(t._experiences.totalCount())] [loss = $(loss_epoch), pi = $(pi_epoch), v = $(v_epoch), panelty = $(panelty_epoch)]"
+                            @info loss_list
+                            @info pi_list
+                            @info v_list
+                            @info panelty_list
 
                             # check for kl divergence
                             kl_epoch_mean = mean(kl_list)
