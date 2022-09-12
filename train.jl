@@ -145,7 +145,7 @@ mutable struct Train
 
                 finally
 
-                    sleep(10)
+                    sleep(15)
 
                 end
 
