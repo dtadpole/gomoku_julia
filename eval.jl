@@ -79,7 +79,7 @@ function player_function(player::String)
 
         filename = "./model/trained_$(args["game_size"])x$(args["game_size"]).best"
         model = Model(args["game_size"], channels=args["model_channels"])
-        if is_file(filename)
+        if isfile(filename)
             # load model if best file exist
             model.load(filename)
         end
