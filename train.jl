@@ -73,7 +73,10 @@ mutable struct Train
                                 pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
                                 v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
-                                lossF = () -> t._model.loss(state, pi, v)[1]
+                                # convert from visit count to distribution
+                                pa = softmax(log.(pi .+ 1e-8), dims=1)
+
+                                lossF = () -> t._model.loss(state, pa, v)[1]  # [IMPORTANT] use normalized distribution pa !!
                                 params = t._model.params()
                                 grads = gradient(lossF, params)
 
