@@ -133,6 +133,10 @@ mutable struct Train
                         backup_file(filename)
                         t._model.save(filename)
 
+                    else
+
+                        @info "Training waiting for more experience [$(exp_trained_count) / $(t._experiences.totalCount())] ..."
+
                     end
 
                 catch e
@@ -141,7 +145,7 @@ mutable struct Train
 
                 finally
 
-                    sleep(1)
+                    sleep(10)
 
                 end
 
