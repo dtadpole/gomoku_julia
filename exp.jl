@@ -35,6 +35,8 @@ mutable struct Experiences
     addExperience::Function
     sampleExperience::Function
     startServer::Function
+    save::Function
+    load::Function
 
     # constructor
     function Experiences(model::Model)
@@ -83,7 +85,7 @@ mutable struct Experiences
 
             # target experience size
             target_exp_size = max(args["exp_min"], min(args["exp_max"],
-                floor(Int, (e._total_count - args["exp_min"]) / 2) + args["exp_min"]))
+                floor(Int, (e._total_count - args["exp_min"]) / 3) + args["exp_min"]))
 
             # truncate experiences
             if length(e._exp_list) > target_exp_size
@@ -142,6 +144,22 @@ mutable struct Experiences
             @info "Experience server started on port [$(args["exp_port"])]"
             @info "Run [infer.sh] to generate experiences ..."
 
+        end
+
+        """Save"""
+        e.save = (path) -> begin
+            io = open(path, "w")
+            serialize(io, (e._total_count, e._exp_list))
+            close(io)
+        end
+
+        """Load"""
+        e.load = (path) -> begin
+            io = open(path, "r")
+            total_count, exp_list = deserialize(io)
+            e._total_count = total_count
+            e._exp_list = exp_list
+            close(io)
         end
 
         return e

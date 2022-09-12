@@ -2,6 +2,18 @@ include("./exp.jl")
 
 using Unzip
 
+function save_optimizer(path::String, opt::Flux.Optimise.Optimiser)
+    open(path, "w") do io
+        serialize(io, opt)
+    end
+end
+
+function load_optimizer(path::String)
+    open(path, "r") do io
+        return deserialize(io)
+    end
+end
+
 mutable struct Train
 
     # attributes
@@ -18,6 +30,30 @@ mutable struct Train
     function Train(model::Model, opt::Flux.Optimise.Optimiser)
 
         t = new(model, opt, Experiences(model))
+
+        # load model if exists
+        model_filename = "./model/trained_$(model.size())x$(model.size()).curr"
+        if isfile(model_filename)
+            @info "Loading model from [$(model_filename)] ..."
+            model.load(model_filename)
+            @info "Loaded Model [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
+        end
+
+        # load optimizer if exists
+        opt_filename = "./model/opt_$(model.size())x$(model.size()).opt"
+        if isfile(opt_filename)
+            @info "Loading optimizer from [$(opt_filename)] ..."
+            t._opt = load_optimizer(opt_filename)
+            @info "Loaded Optimizer $(t._opt)"
+        end
+
+        # load experiences if exists
+        exp_filename = "./model/exp_$(model.size())x$(model.size()).curr"
+        if isfile(exp_filename)
+            @info "Loading experiences from [$(exp_filename)] ..."
+            t._experiences.load(exp_filename)
+            @info "Loaded experiences: [$(t._experiences.totalCount())] ."
+        end
 
         t._experiences.startServer()
 
@@ -144,9 +180,22 @@ mutable struct Train
                         exp_trained_step += 1
 
                         # save model
-                        filename = "./model/trained_$(model.size())x$(model.size()).curr"
-                        backup_file(filename)
-                        t._model.save(filename)
+                        @info "Saving model to [$(model_filename)] ..."
+                        backup_file(model_filename)
+                        t._model.save(model_filename)
+
+                        # save optimizer
+                        @info "Saving optimizer to [$(opt_filename)] ..."
+                        backup_file(opt_filename)
+                        save_optimizer(opt_filename, t._opt)
+
+                        # save experiences
+                        @info "Saving experiences to [$(exp_filename)] ..."
+                        backup_file(exp_filename)
+                        t._experiences.save(exp_filename)
+
+                        # print separator
+                        @info repeat("-", 50)
 
                     else
 
@@ -175,11 +224,14 @@ mutable struct Train
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
+    # model
     model = Model(args["game_size"], channels=args["model_channels"])
     params_size = sum([length(l) for l in Flux.params(model._model)])
     @info "[Model] [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
+    # optimizer
     opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
     @info "[Optimizer] $(opt)"
+    # start training
     train = Train(model, opt)
     train.train()
 end
