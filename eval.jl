@@ -153,7 +153,8 @@ function eval_run()
             @info repeat("-", 50)
             @info "Evaluation Iteration [$(i)] : [$(args["player_1"]) -> X] vs [$(args["player_2"]) -> O]"
             @info repeat("-", 50)
-            score = eval_playout(player1_function, player2_function, turn=rand() > 0.5 ? 1.0 : -1.0)
+            game_turn = rand() > 0.5 ? 1.0 : -1.0
+            score = eval_playout(player1_function, player2_function; turn=game_turn)
             if score > 0
                 player_1_wins += 1
             elseif score < 0
