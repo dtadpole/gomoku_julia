@@ -44,7 +44,7 @@ function parse_commandline()
         "--mcts_cpuct"
         help = "mcts cpuct"
         arg_type = Float32
-        default = Float32(3.0)
+        default = Float32(5.0)
 
         "--mcts_gamma"
         help = "mcts gamma"
@@ -54,7 +54,7 @@ function parse_commandline()
         "--mcts_temperature"
         help = "mcts temperature"
         arg_type = Float32
-        default = Float32(1.5)
+        default = Float32(1.4)
 
         "--train_batch_size"
         help = "train batch size"
