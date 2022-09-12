@@ -116,6 +116,8 @@ function play_game(player1::String, player2::String; turn=1.0)
 
     end
 
+    @info "[$(game._board[game._last_move[1], game._last_move[2]])] wins"
+
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
