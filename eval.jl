@@ -106,9 +106,13 @@ function play_game(player1::String, player2::String; turn=1.0)
     player1_function = player_function(player1)
     player2_function = player_function(player2)
 
+    if turn < 0
+        player2_function(game)
+    end
+
     while !game.is_over()
 
-        if game.turn() * turn > 0
+        if game.turn() > 0
             player1_function(game)
         else
             player2_function(game)
