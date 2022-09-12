@@ -69,7 +69,7 @@ function parse_commandline()
         "--train_epochs"
         help = "train epochs"
         arg_type = Int
-        default = 4
+        default = 8
 
         "--train_kl_target"
         help = "train kl target"
