@@ -96,8 +96,9 @@ mutable struct Model
         """Forward pass"""
         m.forward = (x) -> begin
             p, v = m._model(x)
+            # [IMPORTANT] policy head add log layer before softmax - improves gradient back propagation !!
+            return softmax(log.(p .+ 1e-8), dims=1), v
             # return softmax(p, dims=1), v
-            return softmax(log.(p .+ 1e-8), dims=1), v # [policy head] add log layer before softmax - improves gradient back propagation !!
         end
 
         """Loss"""
