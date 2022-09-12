@@ -104,12 +104,12 @@ function parse_commandline()
         "--exp_min"
         help = "experience min"
         arg_type = Int
-        default = 50_000
+        default = 40_000
 
         "--exp_max"
         help = "experience max"
         arg_type = Int
-        default = 1_000_000
+        default = 800_000
 
         "--exp_server"
         help = "experience server"
