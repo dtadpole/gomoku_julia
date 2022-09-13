@@ -46,7 +46,7 @@ mutable struct Train
             @info repeat("-", 50)
             @info "Loading Optimizer from [$(opt_filename)] ..."
             t._opt = load_optimizer(opt_filename)
-            @info "Loaded Optimizer [η=$(round(t._opt[1].eta), digits=5), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)]"
+            @info "Loaded Optimizer [η=$(round(t._opt[1].eta, digits=5), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)]"
         end
 
         # load experiences if exists
