@@ -46,8 +46,9 @@ infer_playout = () -> begin
     io = IOBuffer()
     serialize(io, experiences_with_id)
 
-    r = HTTP.request(:POST, "$(url)/experiences", body=take!(io))
-    @info "Posted experiences [$(length(experiences))] - [status : $(r.status)]"
+    url = "$(URL_BASE)/experiences"
+    r = HTTP.request(:POST, url, body=take!(io))
+    @info "Posted experiences [$(url)] [len = $(length(experiences)), status = $(r.status)]"
 
 end
 
