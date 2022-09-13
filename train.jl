@@ -187,7 +187,7 @@ mutable struct Train
                         t._model.save(model_filename)
 
                         # save optimizer
-                        @info "Saving optimizer to [$(opt_filename)] : [η=$(round(t._opt[1].eta), digits=5), decay=$(t._opt[2].wd)] ..."
+                        @info "Saving optimizer to [$(opt_filename)] : [η=$(round(t._opt[1].eta, digits=5)), decay=$(t._opt[2].wd)] ..."
                         backup_file(opt_filename)
                         save_optimizer(opt_filename, t._opt)
 
