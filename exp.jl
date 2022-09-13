@@ -20,10 +20,16 @@ end
 
 const _WEIGHTS = 1:floor(Int, args["exp_max"] * 2)
 
+function model_filename(id::Int)
+    model_filename = "./model/$(id)/model_$(model.size())x$(model.size()).curr"
+    return model_filename
+end
+
 mutable struct Experiences
 
     # attributes
-    _models::Vector{Model}
+    _model_list::Vector{Model}
+    _opt_list::Vector{Flux.Optimise.Optimiser}
     _exp_list::Vector{Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}}
     _total_count::Vector{Int}
     _trained_count::Vector{Int}
@@ -40,9 +46,11 @@ mutable struct Experiences
     startServer::Function
     save::Function
     load::Function
+    model::Function
+    opt::Function
 
     # constructor
-    function Experiences(models::Vector{Model})
+    function Experiences(models::Vector{Model}, opts::Vector{Flux.Optimise.Optimiser})
 
         global _WEIGHTS
 
@@ -52,7 +60,7 @@ mutable struct Experiences
             end
         end
 
-        e = new(models)
+        e = new(models, opts)
 
         # initialize experiences, total count, and trained count
         e._exp_list = Vector{Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}}()
@@ -63,7 +71,7 @@ mutable struct Experiences
         e._trained_count = zeros(Int, length(models))
 
         """Size"""
-        e.size = () -> e._models[1].size()
+        e.size = () -> e._model_list[1].size()
 
         """Length"""
         e.length = (id) -> length(e._exp_list[id])
@@ -82,7 +90,7 @@ mutable struct Experiences
         """Play game"""
         e.playGame = (id_1::Int, id_2::Int) -> begin
 
-            experiences, game_init_turn = mcts_play_game(e._models[id_1], e._models[id_2])
+            experiences, game_init_turn = mcts_play_game(e._model_list[id_1], e._model_list[id_2])
 
             id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
 
@@ -170,7 +178,7 @@ mutable struct Experiences
             HTTP.register!(router, "GET", "/model/{id}", (req) -> begin
                 id = HTTP.getparams(req)["id"]
                 io = IOBuffer()
-                serialize(io, (id, e._models[id].size(), e._models[id].channels(), e._models[id]._model))
+                serialize(io, (id, e._model_list[id].size(), e._model_list[id].channels(), e._model_list[id]._model))
                 return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
             end)
 
@@ -196,6 +204,16 @@ mutable struct Experiences
             e._trained_count[id] = trained_count
             e._exp_list[id] = exp_list
             close(io)
+        end
+
+        """Return model"""
+        e.model = (id) -> begin
+            return e._model_list[id]
+        end
+
+        """Return opt"""
+        e.opt = (id) -> begin
+            return e._opt_list[id]
         end
 
         return e
