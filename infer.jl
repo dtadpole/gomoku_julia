@@ -11,7 +11,7 @@ function download_model(id::Int)
     url = "$(URL_BASE)/model/$(id)"
 
     r = HTTP.request(:GET, "$(url)")
-    @info "[$(id)] Requesting model [$(url)] : [status = $(r.status)]"
+    @info "[$(id)] Requested model [$(url)] : [status = $(r.status)]"
     io = IOBuffer(r.body)
     _id, _size, _channels, _model = deserialize(io)
 
