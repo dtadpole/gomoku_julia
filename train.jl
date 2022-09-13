@@ -230,9 +230,9 @@ mutable struct Train
 
                             # save model
                             model_ = t._experiences.model(id)
-                            param_size = sum(length.(Flux.params(model_)))
+                            params_size = sum([length(l) for l in Flux.params(model_._model)])
                             model_filename = t.modelPath(id)
-                            @info "[$(id)] Saving model to [$(model_filename)] : [$(model_.size())x$(model_.size())] [channels=$(model_.channels())] [params=$(param_size)] ..."
+                            @info "[$(id)] Saving model to [$(model_filename)] : [$(model_.size())x$(model_.size())] [c=$(model_.channels())] [p=$(params_size)] ..."
                             backup_file(model_filename)
                             model_.save(model_filename)
 
