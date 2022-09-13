@@ -24,5 +24,6 @@ docs/site/
 Manifest.toml
 
 # ignore models
-*.model
+exp_*.curr
+opt_*.curr
 *.bak
