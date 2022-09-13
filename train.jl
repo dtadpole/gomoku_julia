@@ -182,17 +182,17 @@ mutable struct Train
                         @info repeat("-", 50)
 
                         # save model
-                        @info "Saving model to [$(model_filename)] ..."
+                        @info "Saving model to [$(model_filename)] : [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params] ..."
                         backup_file(model_filename)
                         t._model.save(model_filename)
 
                         # save optimizer
-                        @info "Saving optimizer to [$(opt_filename)] ..."
+                        @info "Saving optimizer to [$(opt_filename)] : [η=$(t._opt[1].eta), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)] ..."
                         backup_file(opt_filename)
                         save_optimizer(opt_filename, t._opt)
 
                         # save experiences
-                        @info "Saving experiences to [$(exp_filename)] ..."
+                        @info "Saving experiences to [$(exp_filename)] : [len=$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] ..."
                         backup_file(exp_filename)
                         t._experiences.save(exp_filename)
 
