@@ -79,6 +79,12 @@ mutable struct Experiences
         """Add experience"""
         e.addExperience = (s, pi, v) -> begin
 
+            size_s = size(s)
+            size_pi = size(pi)
+            if size_s[1] != e.size() || size_s[2] != e.size() || size_pi[1] != e.size() || size_pi[2] != e.size()
+                error("Invalid experience [s: $(size_s), pi: $(size_pi), v: $(v)]")
+            end
+
             # flip and rotate per game symmetry
             s_flipped = flip(s)
             pi_flipped = flip(pi)
