@@ -2,9 +2,11 @@ include("./mcts.jl")
 
 using HTTP
 
-URL_BASE = "http://$server:$port"
+global URL_BASE = ""
 
 function download_model(id::Int)
+
+    global URL_BASE
 
     url = "$(URL_BASE)/model/$(id)"
 
@@ -25,8 +27,12 @@ end
 
 infer_playout = () -> begin
 
+    global URL_BASE
+
     server = args["exp_server"]
     port = args["exp_port"]
+
+    URL_BASE = "http://$server:$port"
 
     id_1, model_1 = download_model(1)
     id_2, model_2 = download_model(2)
