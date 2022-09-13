@@ -176,7 +176,7 @@ mutable struct Experiences
 
             # download model
             HTTP.register!(router, "GET", "/model/{id}", (req) -> begin
-                id = HTTP.getparams(req)["id"]
+                id = parse(Int, HTTP.getparams(req)["id"])
                 io = IOBuffer()
                 serialize(io, (id, e._model_list[id].size(), e._model_list[id].channels(), e._model_list[id]._model))
                 return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
