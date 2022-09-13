@@ -55,7 +55,7 @@ mutable struct Train
             @info repeat("-", 50)
             @info "Loading Experiences from [$(exp_filename)] ..."
             t._experiences.load(exp_filename)
-            @info "Loaded Experiences [$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())]"
+            @info "Loaded Experiences [len=$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())]"
         end
 
         @info repeat("=", 50)
@@ -102,7 +102,7 @@ mutable struct Train
                             v_list = Vector{Float32}()
                             panelty_list = Vector{Float32}()
 
-                            @info "Training epoch [$(epoch)] started [$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] ..."
+                            @info "Training epoch [$(epoch)] started [len=$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] ..."
 
                             for batch in 1:BATCH_NUM
 
@@ -201,7 +201,7 @@ mutable struct Train
 
                     else
 
-                        @info "Training is waiting for more experiences [$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] ..."
+                        @info "Training is waiting for more experiences [len=$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] ..."
 
                     end
 
