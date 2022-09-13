@@ -10,8 +10,8 @@ function download_model(id::Int)
 
     url = "$(URL_BASE)/model/$(id)"
 
-    r = HTTP.request(:GET, "$(url)/model/1")
-    @info "Requesting model[$(id)] from $(url) : $(r.status)"
+    r = HTTP.request(:GET, "$(url)")
+    @info "[$(id)] Requesting model from $(url) : $(r.status)"
     io = IOBuffer(r.body)
     _id, _size, _channels, _model = deserialize(io)
 
@@ -19,7 +19,7 @@ function download_model(id::Int)
     Flux.loadmodel!(model._model, _model)
     # testmode!(model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
-    @info "Loaded model[$(id)] from $(url) : $(model.size()), $(model.channels()), $(params_size)"
+    @info "[$(id)] Loaded model from $(url) : $(model.size()), $(model.channels()), $(params_size)"
 
     return _id, model
 
