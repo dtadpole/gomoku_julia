@@ -109,7 +109,7 @@ mutable struct Train
                 @info repeat("-", 50)
                 @info "[$(id)] Loading Experiences from [$(exp_filename)] ..."
                 t._experiences.load(id, exp_filename)
-                @info "[$(id)] Loaded Experiences [len=$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())]"
+                @info "[$(id)] Loaded Experiences [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))]"
             end
         end
 
@@ -151,7 +151,7 @@ mutable struct Train
                                 v_list = Vector{Float32}()
                                 panelty_list = Vector{Float32}()
 
-                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length()), total=$(t._experiences.totalCount()), trained=$(t._experiences.trainedCount())] ..."
+                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))] ..."
 
                                 for batch in 1:BATCH_NUM
 

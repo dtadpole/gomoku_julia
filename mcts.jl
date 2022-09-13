@@ -155,6 +155,10 @@ function mcts_play_game(model_1::Model, model_2::Model)
 
     while !game.is_over()
 
+        if args["game_display"]
+            start_time = time()
+        end
+
         # play
         prior_N = node._N
         while node._N < args["mcts_n"]
@@ -180,8 +184,8 @@ function mcts_play_game(model_1::Model, model_2::Model)
 
         game.play_action(action)
         if args["game_display"]
-            # println("maxK : $(maxk(pa, 5))")
-            @info "$(prior_N) -> $(post_N) : $(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)], ", "))"
+            duration = round(time() - start_time, digits=2)
+            @info "[$(prior_N) -> $(post_N), $(duration)s] $(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)], ", "))"
             # display
             game.display()
         end
