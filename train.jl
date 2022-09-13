@@ -46,7 +46,7 @@ mutable struct Train
             @info repeat("-", 50)
             @info "Loading Optimizer from [$(opt_filename)] ..."
             t._opt = load_optimizer(opt_filename)
-            @info "Loaded Optimizer [η=$(t._opt[1].eta), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)]"
+            @info "Loaded Optimizer [η=$(round(t._opt[1].eta), digits=5), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)]"
         end
 
         # load experiences if exists
@@ -187,7 +187,7 @@ mutable struct Train
                         t._model.save(model_filename)
 
                         # save optimizer
-                        @info "Saving optimizer to [$(opt_filename)] : [η=$(t._opt[1].eta), β=$(t._opt[1].beta), decay=$(t._opt[2].wd)] ..."
+                        @info "Saving optimizer to [$(opt_filename)] : [η=$(round(t._opt[1].eta), digits=5), decay=$(t._opt[2].wd)] ..."
                         backup_file(opt_filename)
                         save_optimizer(opt_filename, t._opt)
 
@@ -233,7 +233,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @info "[Model] [$(model.size())x$(model.size())] [channels=$(model.channels())] [params=$(params_size)]"
     # optimizer
     opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
-    @info "[Optimizer] [η=$(opt[1].eta), β=$(opt[1].beta), decay=$(opt[2].wd)]"
+    @info "[Optimizer] [η=$(round(opt[1].eta, digits=5)), β=$(opt[1].beta), decay=$(opt[2].wd)]"
     # start training
     train = Train(model, opt)
     train.train()
