@@ -37,7 +37,7 @@ mutable struct Train
             @info repeat("-", 50)
             @info "Loading Model from [$(model_filename)] ..."
             model.load(model_filename)
-            @info "Loaded Model [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
+            @info "Loaded Model [$(model.size())x$(model.size())] [channels=$(model.channels())] [params=$(params_size)]"
         end
 
         # load optimizer if exists
@@ -182,7 +182,7 @@ mutable struct Train
                         @info repeat("-", 50)
 
                         # save model
-                        @info "Saving model to [$(model_filename)] : [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params] ..."
+                        @info "Saving model to [$(model_filename)] : [$(model.size())x$(model.size())] [channels=$(model.channels())] [params=$(params_size)] ..."
                         backup_file(model_filename)
                         t._model.save(model_filename)
 
@@ -230,7 +230,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     # model
     model = Model(args["game_size"], channels=args["model_channels"])
     params_size = sum([length(l) for l in Flux.params(model._model)])
-    @info "[Model] [$(model.size())x$(model.size())] [$(model.channels()) channels] [$(params_size) params]"
+    @info "[Model] [$(model.size())x$(model.size())] [channels=$(model.channels())] [params=$(params_size)]"
     # optimizer
     opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
     @info "[Optimizer] [η=$(opt[1].eta), β=$(opt[1].beta), decay=$(opt[2].wd)]"
