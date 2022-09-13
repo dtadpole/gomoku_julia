@@ -181,7 +181,7 @@ function mcts_play_game(model_1::Model, model_2::Model)
         game.play_action(action)
         if args["game_display"]
             # println("maxK : $(maxk(pa, 5))")
-            @info "[$(prior_N) -> $(post_N)] $([(game.str_action(a), n) for (a, n) in maxk(node.rootN(), 5)])"
+            @info "[$(prior_N) -> $(post_N)] $(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)])"
             # display
             game.display()
         end
