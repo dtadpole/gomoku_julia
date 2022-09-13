@@ -50,7 +50,7 @@ infer_playout = () -> begin
     url = "$(URL_BASE)/experiences"
     @info "Posting experiences [$(url)] [len = $(length(experiences))]"
     r = HTTP.request(:POST, url, body=take!(io))
-    @info "Posted experiences [$(url)] [len = $(length(experiences)), status = $(r.status)]"
+    @info "Posted experiences [$(url)] [status = $(r.status)]"
 
 end
 
