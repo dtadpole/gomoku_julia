@@ -47,6 +47,7 @@ infer_playout = () -> begin
     serialize(io, experiences_with_id)
 
     url = "$(URL_BASE)/experiences"
+    @info "Posting experiences [$(url)] [len = $(length(experiences))]"
     r = HTTP.request(:POST, url, body=take!(io))
     @info "Posted experiences [$(url)] [len = $(length(experiences)), status = $(r.status)]"
 
