@@ -11,7 +11,7 @@ function download_model(id::Int)
     url = "$(URL_BASE)/model/$(id)"
 
     r = HTTP.request(:GET, "$(url)")
-    @info "[$(id)] Requesting model from [$(url)] : [status = $(r.status)]"
+    @info "[$(id)] Requesting model [$(url)] : [status = $(r.status)]"
     io = IOBuffer(r.body)
     _id, _size, _channels, _model = deserialize(io)
 
@@ -19,7 +19,7 @@ function download_model(id::Int)
     Flux.loadmodel!(model._model, _model)
     # testmode!(model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
-    @info "[$(id)] Loaded model from [$(url)] : [$(model.size())x$(model.size()), channels=$(model.channels()), params=$(params_size)]"
+    @info "[$(id)] Loaded model [$(url)] : [$(model.size())x$(model.size()), channels=$(model.channels()), params=$(params_size)]"
 
     return _id, model
 
@@ -37,6 +37,7 @@ infer_playout = () -> begin
     id_1, model_1 = download_model(1)
     id_2, model_2 = download_model(2)
 
+    @info repeat("-", 50)
     experiences, game_init_turn = mcts_play_game(model_1, model_2)
 
     id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
