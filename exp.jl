@@ -23,10 +23,10 @@ const _WEIGHTS = 1:floor(Int, args["exp_max"] * 2)
 mutable struct Experiences
 
     # attributes
-    _model::Model
-    _exp_list::Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}
-    _total_count::Int
-    _trained_count::Int
+    _models::Vector{Model}
+    _exp_list::Vector{Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}}
+    _total_count::Vector{Int}
+    _trained_count::Vector{Int}
 
     # functions
     size::Function
@@ -42,42 +42,60 @@ mutable struct Experiences
     load::Function
 
     # constructor
-    function Experiences(model::Model)
+    function Experiences(models::Vector{Model})
 
         global _WEIGHTS
 
-        e = new(model, Array{Tuple{Matrix{Float32},Matrix{Float32},Float32},1}(), 0, 0)
+        for model in models
+            if model.size() != models[1].size()
+                error("Model size does not match : [$(models[1].size()) vs $(model.size())]")
+            end
+        end
+
+        e = new(models)
+
+        # initialize experiences, total count, and trained count
+        e._exp_list = Vector{Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}}()
+        for i in 1:length(models)
+            push!(e._exp_list, Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}())
+        end
+        e._total_count = zeros(Int, length(models))
+        e._trained_count = zeros(Int, length(models))
 
         """Size"""
-        e.size = () -> e._model.size()
+        e.size = () -> e._models[1].size()
 
         """Length"""
-        e.length = () -> length(e._exp_list)
+        e.length = (id) -> length(e._exp_list[id])
 
         """Total count"""
-        e.totalCount = () -> e._total_count
+        e.totalCount = (id) -> e._total_count[id]
 
         """Trained count"""
-        e.trainedCount = () -> e._trained_count
+        e.trainedCount = (id) -> e._trained_count[id]
 
         """Add to trained count"""
-        e.addTrainedCount = (count) -> begin
-            e._trained_count += count
+        e.addTrainedCount = (id, count) -> begin
+            e._trained_count[id] += count
         end
 
         """Play game"""
-        e.playGame = () -> begin
+        e.playGame = (id_1::Int, id_2::Int) -> begin
 
-            experiences = mcts_play_game(e._model)
+            experiences, game_init_turn = mcts_play_game(e._models[id_1], e._models[id_2])
 
-            for (state, pi, v) in experiences
-                e.addExperience(state, pi, v)
+            id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
+
+            experiences_with_id = [(mod(step, 2) == 1 ? id_first : id_second, s, pi, v) for (step, (s, pi, v)) in enumerate(experiences)]
+
+            for (id, s, pi, v) in experiences_with_id
+                e.addExperience(id, s, pi, v)
             end
 
         end
 
         """Add experience"""
-        e.addExperience = (s, pi, v) -> begin
+        e.addExperience = (id, s, pi, v) -> begin
 
             size_s = size(s)
             size_pi = size(pi)
@@ -88,31 +106,31 @@ mutable struct Experiences
             # flip and rotate per game symmetry
             s_flipped = flip(s)
             pi_flipped = flip(pi)
-            push!(e._exp_list, (s, pi, v))
-            push!(e._exp_list, (rotate90(s), rotate90(pi), v))
-            push!(e._exp_list, (rotate180(s), rotate180(pi), v))
-            push!(e._exp_list, (rotate270(s), rotate270(pi), v))
-            push!(e._exp_list, (s_flipped, pi_flipped, v))
-            push!(e._exp_list, (rotate90(s_flipped), rotate90(pi_flipped), v))
-            push!(e._exp_list, (rotate180(s_flipped), rotate180(pi_flipped), v))
-            push!(e._exp_list, (rotate270(s_flipped), rotate270(pi_flipped), v))
+            push!(e._exp_list[id], (s, pi, v))
+            push!(e._exp_list[id], (rotate90(s), rotate90(pi), v))
+            push!(e._exp_list[id], (rotate180(s), rotate180(pi), v))
+            push!(e._exp_list[id], (rotate270(s), rotate270(pi), v))
+            push!(e._exp_list[id], (s_flipped, pi_flipped, v))
+            push!(e._exp_list[id], (rotate90(s_flipped), rotate90(pi_flipped), v))
+            push!(e._exp_list[id], (rotate180(s_flipped), rotate180(pi_flipped), v))
+            push!(e._exp_list[id], (rotate270(s_flipped), rotate270(pi_flipped), v))
 
             # record total experience size
-            e._total_count += 8
+            e._total_count[id] += 8
 
             # target experience size
             target_exp_size = max(args["exp_min"], min(args["exp_max"],
-                floor(Int, (e._total_count - args["exp_min"]) * args["exp_preserve_ratio"]) + args["exp_min"]))
+                floor(Int, (e._total_count[id] - args["exp_min"]) * args["exp_preserve_ratio"]) + args["exp_min"]))
 
             # truncate experiences
-            if length(e._exp_list) > target_exp_size
-                e._exp_list = e._exp_list[length(e._exp_list)-target_exp_size+1:end]
+            if length(e._exp_list[id]) > target_exp_size
+                e._exp_list[id] = e._exp_list[id][length(e._exp_list[id])-target_exp_size+1:end]
             end
         end
 
         """Sample experience"""
-        e.sampleExperience = (sample_size::Int) -> begin
-            s, pi, v = unzip(sample(e._exp_list, ProbabilityWeights(_WEIGHTS[1:min(length(e._exp_list), args["exp_max"])]), sample_size))
+        e.sampleExperience = (id, sample_size::Int) -> begin
+            s, pi, v = unzip(sample(e._exp_list[id], ProbabilityWeights(_WEIGHTS[1:min(length(e._exp_list[id]), args["exp_max"])]), sample_size, replace=false))
             s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
             pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
             v = reshape(cat(v...; dims=2), (1, sample_size))
@@ -133,8 +151,8 @@ mutable struct Experiences
             HTTP.register!(router, "POST", "/experience", (req) -> begin
                 body = HTTP.payload(req)
                 io = IOBuffer(body)
-                s, pi, v = deserialize(io)
-                e.addExperience(s, pi, v)
+                id, s, pi, v = deserialize(io)
+                e.addExperience(id, s, pi, v)
                 return HTTP.Response(200, "OK")
             end)
 
@@ -142,17 +160,17 @@ mutable struct Experiences
             HTTP.register!(router, "POST", "/experiences", (req) -> begin
                 body = HTTP.payload(req)
                 io = IOBuffer(body)
-                experiences = deserialize(io)
-                for (s, pi, v) in experiences
-                    e.addExperience(s, pi, v)
+                for (id, s, pi, v) in experiences
+                    e.addExperience(id, s, pi, v)
                 end
                 return HTTP.Response(200, "OK")
             end)
 
             # download model
-            HTTP.register!(router, "GET", "/model", (req) -> begin
+            HTTP.register!(router, "GET", "/model/{id}", (req) -> begin
+                id = HTTP.getparams(req)["id"]
                 io = IOBuffer()
-                serialize(io, (e._model.size(), e._model.channels(), e._model._model))
+                serialize(io, (id, e._models[id].size(), e._models[id].channels(), e._models[id]._model))
                 return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
             end)
 
@@ -164,19 +182,19 @@ mutable struct Experiences
         end
 
         """Save"""
-        e.save = (path) -> begin
+        e.save = (id, path) -> begin
             io = open(path, "w")
-            serialize(io, (e._total_count, e._trained_count, e._exp_list))
+            serialize(io, (e._total_count[id], e._trained_count[id], e._exp_list[id]))
             close(io)
         end
 
         """Load"""
-        e.load = (path) -> begin
+        e.load = (id, path) -> begin
             io = open(path, "r")
             total_count, trained_count, exp_list = deserialize(io)
-            e._total_count = total_count
-            e._trained_count = trained_count
-            e._exp_list = exp_list
+            e._total_count[id] = total_count
+            e._trained_count[id] = trained_count
+            e._exp_list[id] = exp_list
             close(io)
         end
 
@@ -187,9 +205,10 @@ mutable struct Experiences
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    # create model
-    model = Model(args["game_size"], channels=args["model_channels"])
-    e = Experiences(model)
+    # create models
+    model_1 = Model(args["game_size"], channels=args["model_channels"])
+    model_2 = Model(args["game_size"], channels=args["model_channels"])
+    e = Experiences([model_1, model_2])
     e.startServer()
-    e.playGame()
+    e.playGame(1, 2)
 end

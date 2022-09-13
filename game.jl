@@ -19,6 +19,7 @@ mutable struct Game
     available_actions::Function
     play::Function
     play_action::Function
+    str_action::Function
     is_over::Function
     score::Function
     has_won::Function
@@ -75,6 +76,11 @@ mutable struct Game
             x = div(action - 1, g._size) + 1
             y = mod(action - 1, g._size) + 1
             g.play(x, y)
+        end
+
+        """action string"""
+        g.str_action = (action::Int) -> begin
+            return "$(mod(action-1,size)+'A')$(div(action-1,size)+1)"
         end
 
         """Check if the game is over."""

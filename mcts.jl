@@ -120,37 +120,59 @@ function maxk(a, k)
     return collect(zip(b, a[b]))
 end
 
-function mcts_play_game(model::Model)
+function mcts_play_game(model_1::Model, model_2::Model)
+
+    if model_1.size() != model_2.size()
+        error("Models must have the same size")
+    end
+
+    SIZE = model_1.size()
 
     TEMPERATURE = args["mcts_temperature"]
 
     experiences = Array{Tuple{Array{Float32,2},Array{Float32,2},Float32},1}()
 
-    # initialize game
-    game_turn = rand() > 0.5 ? 1.0 : -1.0
-    game = Game(model.size(), turn=game_turn)
+    # initialize game with random turn
+    game_init_turn = rand() > 0.5 ? 1.0 : -1.0
+    game = Game(SIZE, turn=game_init_turn)
 
     # create mcts node
-    node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+    node_1 = MctsNode(game, model_1; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+    node_2 = MctsNode(game, model_2; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+
+    # choose which node to travel
+    if game.turn() > 0
+        node = node_1
+        node_opposite = node_2
+        model = model_1
+        model_opposite = model_2
+    else
+        node = node_2
+        node_opposite = node_1
+        model = model_2
+        model_opposite = model_1
+    end
 
     while !game.is_over()
 
         # play
+        prior_N = node._N
         while node._N < args["mcts_n"]
             node.travelBranch()
         end
+        post_N = node._N
 
         # get distribution
-        pi = reshape(node.rootN(), (model.size(), model.size()))
+        pi = reshape(node.rootN(), (SIZE, SIZE))
         v = node.rootV()
         push!(experiences, (game.state(), pi, v))
 
         # play action
-        pa = reshape(pi, model.size() * model.size())
+        pa = reshape(pi, SIZE * SIZE)
         if TEMPERATURE > 1e-4
             pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
             # pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
-            action = sample(1:model.size()^2, ProbabilityWeights(pa))
+            action = sample(1:SIZE^2, ProbabilityWeights(pa))
         else
             pa = pa .* game.available_actions()
             action = argmax(pa)
@@ -159,7 +181,7 @@ function mcts_play_game(model::Model)
         game.play_action(action)
         if args["game_display"]
             # println("maxK : $(maxk(pa, 5))")
-            @info maxk(node.rootN(), 5)
+            @info "[$(prior_N) -> $(post_N)] $([(game.str_action(a), n) for (a, n) in maxk(node.rootN(), 5)])"
             # display
             game.display()
         end
@@ -168,14 +190,27 @@ function mcts_play_game(model::Model)
         node = node._children[action]
         node.clearParent()
 
+        # update mcts node opposite
+        if node_opposite._children !== nothing && node_opposite._children[action] !== nothing
+            node_opposite = node_opposite._children[action]
+            node_opposite.clearParent()
+        else
+            node_opposite = MctsNode(game, model_opposite; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+        end
+
+        # swap node and node_opposite
+        node, node_opposite = node_opposite, node
+        model, model_opposite = model_opposite, model
+
     end
 
-    return experiences
+    return experiences, game_init_turn
 
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     # create model
-    model = Model(args["game_size"], channels=args["model_channels"])
-    mcts_play_game(model)
+    model_1 = Model(args["game_size"], channels=args["model_channels"])
+    model_2 = Model(args["game_size"], channels=args["model_channels"])
+    mcts_play_game(model_1, model_2)
 end

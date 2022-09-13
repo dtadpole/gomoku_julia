@@ -2,26 +2,43 @@ include("./mcts.jl")
 
 using HTTP
 
-infer_playout = () -> begin
+URL_BASE = "http://$server:$port"
 
-    server = args["exp_server"]
-    port = args["exp_port"]
-    url = "http://$server:$port"
+function download_model(id::Int)
 
-    r = HTTP.request(:GET, "$(url)/model")
-    @info "Requesting model from $(url) : $(r.status)"
+    url = "$(URL_BASE)/model/$(id)"
+
+    r = HTTP.request(:GET, "$(url)/model/1")
+    @info "Requesting model[$(id)] from $(url) : $(r.status)"
     io = IOBuffer(r.body)
-    _size, _channels, _model = deserialize(io)
+    _id, _size, _channels, _model = deserialize(io)
 
     model = Model(_size, channels=_channels)
     Flux.loadmodel!(model._model, _model)
     # testmode!(model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
-    @info "Requested model from $(url) : $(model.size()), $(model.channels()), $(params_size)"
+    @info "Loaded model[$(id)] from $(url) : $(model.size()), $(model.channels()), $(params_size)"
 
-    experiences = mcts_play_game(model)
+    return _id, model
+
+end
+
+infer_playout = () -> begin
+
+    server = args["exp_server"]
+    port = args["exp_port"]
+
+    id_1, model_1 = download_model(1)
+    id_2, model_2 = download_model(2)
+
+    experiences, game_init_turn = mcts_play_game(model_1, model_2)
+
+    id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
+
+    experiences_with_id = [(mod(step, 2) == 1 ? id_first : id_second, s, pi, v) for (step, (s, pi, v)) in enumerate(experiences)]
+
     io = IOBuffer()
-    serialize(io, experiences)
+    serialize(io, experiences_with_id)
 
     r = HTTP.request(:POST, "$(url)/experiences", body=take!(io))
     @info "Posted experiences [$(length(experiences))] - [status : $(r.status)]"
@@ -47,4 +64,5 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @info repeat("-", 50)
     @info "Inference Completed [$(args["infer_playouts"])] Iterations ."
     @info repeat("-", 50)
+
 end
