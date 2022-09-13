@@ -214,7 +214,7 @@ mutable struct Train
                                     # update learning rate
                                     t._experiences.opt(id)[1].eta = new_learning_rate
                                 elseif kl_epoch_mean < args["train_kl_target"] / 2.0
-                                    new_learning_rate = min(t._experiences.opt(id)[1].eta * 1.5, learning_rate, args["learning_rate"] * args["learning_rate_range"])
+                                    new_learning_rate = min(t._experiences.opt(id)[1].eta * 1.5, args["learning_rate"] * args["learning_rate_range"])
                                     @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=5))] ."
                                     # update learning rate
                                     t._experiences.opt(id)[1].eta = new_learning_rate
