@@ -168,7 +168,7 @@ mutable struct Experiences
             HTTP.register!(router, "POST", "/experiences", (req) -> begin
                 body = HTTP.payload(req)
                 io = IOBuffer(body)
-                for (id, s, pi, v) in experiences
+                for (id, s, pi, v) in deserialize(io)
                     e.addExperience(id, s, pi, v)
                 end
                 return HTTP.Response(200, "OK")
