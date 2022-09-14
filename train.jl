@@ -82,14 +82,14 @@ mutable struct Train
 
             # initialize optimizer
             opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
-            @info "[$(id)] Initialize Optimizer [η=$(round(opt[1].eta, digits=4)), β=$(round.(opt[1].beta, digits=4)), decay=$(opt[2].wd)]"
+            @info "[$(id)] Initialize Optimizer [η=$(round(opt[1].eta, digits=4)), β=$(round.(opt[1].beta, digits=4)), δ=$(opt[2].wd)]"
             # load optimizer if exists
             opt_filename = t.optPath(id)
             if isfile(opt_filename)
                 @info repeat("-", 50)
                 @info "[$(id)] Loading Optimizer from [$(opt_filename)] ..."
                 opt = load_optimizer(opt_filename)
-                @info "[$(id)] Loaded Optimizer [η=$(round(opt[1].eta, digits=4)), β=$(round.(opt[1].beta, digits=4)), decay=$(opt[2].wd)]"
+                @info "[$(id)] Loaded Optimizer [η=$(round(opt[1].eta, digits=4)), β=$(round.(opt[1].beta, digits=4)), δ=$(opt[2].wd)]"
             end
             # move to gpu
             if args["model_cuda"] >= 0
@@ -154,7 +154,7 @@ mutable struct Train
                                 v_list = Vector{Float32}()
                                 panelty_list = Vector{Float32}()
 
-                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))] ..."
+                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
 
                                 for batch in 1:BATCH_NUM
 
@@ -200,10 +200,10 @@ mutable struct Train
 
                                 end
 
-                                loss_epoch = round(mean(loss_list), digits=4)
-                                pi_epoch = round(mean(pi_list), digits=4)
-                                v_epoch = round(mean(v_list), digits=4)
-                                panelty_epoch = round(mean(panelty_list), digits=4)
+                                loss_epoch = round(mean(loss_list), digits=3)
+                                pi_epoch = round(mean(pi_list), digits=3)
+                                v_epoch = round(mean(v_list), digits=3)
+                                panelty_epoch = round(mean(panelty_list), digits=3)
 
                                 @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),pi) + ($(v_epoch),v) + ($(panelty_epoch),panelty)]"
                                 # @info loss_list pi_list v_list panelty_list
@@ -235,20 +235,20 @@ mutable struct Train
                             model_ = t._experiences.model(id)
                             params_size = sum([length(l) for l in Flux.params(model_._model)])
                             model_filename = t.modelPath(id)
-                            @info "[$(id)] Saving model to [$(model_filename)] : [$(model_.size())x$(model_.size())] [c=$(model_.channels())] [p=$(params_size)] ..."
+                            @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size())] [c=$(model_.channels())] [p=$(params_size)] ..."
                             backup_file(model_filename)
                             model_.save(model_filename)
 
                             # save optimizer
                             opt_ = t._experiences.opt(id)
                             opt_filename = t.optPath(id)
-                            @info "[$(id)] Saving optimizer to [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), decay=$(opt_[2].wd)] ..."
+                            @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)] ..."
                             backup_file(opt_filename)
                             save_optimizer(opt_filename, opt_)
 
                             # save experiences
                             exp_filename = t.expPath(id)
-                            @info "[$(id)] Saving experiences to [$(exp_filename)] : [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))] ..."
+                            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
                             backup_file(exp_filename)
                             t._experiences.save(id, exp_filename)
 
@@ -257,7 +257,7 @@ mutable struct Train
 
                         else
 
-                            @info "[$(id)] Training is waiting for more experiences [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))] ..."
+                            @info "[$(id)] Training is waiting for more experiences [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
 
                         end
 
