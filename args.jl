@@ -136,11 +136,6 @@ function parse_commandline()
         arg_type = Int
         default = 12
 
-        "--eval_id"
-        help = "eval id"
-        arg_type = Int
-        default = 1
-
         "--player_1"
         help = "player 1"
         arg_type = String

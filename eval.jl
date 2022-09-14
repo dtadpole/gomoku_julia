@@ -163,50 +163,52 @@ function eval_run()
     player_2_wins = 0
     draws = 0
 
-    eval_id = args["eval_id"]
+    for eval_id in 1:2
 
-    @info repeat("=", 50)
-    @info "[$(eval_id)] Starting evaluation [$(args["player_1"])] vs [$(args["player_2"])] - [$(args["eval_playouts"]) playouts]"
-    @info repeat("-", 50)
-
-    player1_function, model_1 = player_function(args["player_1"], eval_id=eval_id)
-    player2_function, model_2 = player_function(args["player_2"], eval_id=eval_id)
-
-    for i in 1:args["eval_playouts"]
-        try
-            @info repeat("-", 50)
-            @info "[$(eval_id)] Evaluation Iteration [$(i)] : [$(args["player_1"]) -> X] vs [$(args["player_2"]) -> O]"
-            @info repeat("-", 50)
-            game_turn = rand() > 0.5 ? 1.0 : -1.0
-            score = eval_playout(player1_function, player2_function; turn=game_turn)
-            if score > 0
-                player_1_wins += 1
-            elseif score < 0
-                player_2_wins += 1
-            else
-                draws += 1
-            end
-        catch e
-            @error "[$(eval_id)] Error" exception = (e, catch_backtrace())
-            sleep(1.4^(i - 1))
-        finally
-            @info repeat("-", 50)
-            @info "[$(eval_id)] Tally : [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
-            sleep(1)
-        end
-    end
-
-    @info repeat("=", 50)
-    @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
-    if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
+        @info repeat("=", 50)
+        @info "[$(eval_id)] Starting evaluation [$(args["player_1"])] vs [$(args["player_2"])] - [$(args["eval_playouts"]) playouts]"
         @info repeat("-", 50)
-        @info "[$(eval_id)] Replacing best model with current model ..."
-        best_filename = modelPath(args["eval_id"]; tag="best")
-        backup_file(best_filename)
-        model_1.save(best_filename)
-        @info "[$(eval_id)] Replaced best model with current model !"
+
+        player1_function, model_1 = player_function(args["player_1"], eval_id=eval_id)
+        player2_function, model_2 = player_function(args["player_2"], eval_id=eval_id)
+
+        for i in 1:args["eval_playouts"]
+            try
+                @info repeat("-", 50)
+                @info "[$(eval_id)] Evaluation Iteration [$(i)] : [$(args["player_1"]) -> X] vs [$(args["player_2"]) -> O]"
+                @info repeat("-", 50)
+                game_turn = rand() > 0.5 ? 1.0 : -1.0
+                score = eval_playout(player1_function, player2_function; turn=game_turn)
+                if score > 0
+                    player_1_wins += 1
+                elseif score < 0
+                    player_2_wins += 1
+                else
+                    draws += 1
+                end
+            catch e
+                @error "[$(eval_id)] Error" exception = (e, catch_backtrace())
+                sleep(1.4^(i - 1))
+            finally
+                @info repeat("-", 50)
+                @info "[$(eval_id)] Tally : [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
+                sleep(1)
+            end
+        end
+
+        @info repeat("=", 50)
+        @info "[$(eval_id)] [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
+        if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
+            @info repeat("-", 50)
+            @info "[$(eval_id)] Replacing best model with current model ..."
+            best_filename = modelPath(eval_id; tag="best")
+            backup_file(best_filename)
+            model_1.save(best_filename)
+            @info "[$(eval_id)] Replaced best model with current model !"
+        end
+        @info repeat("=", 50)
+
     end
-    @info repeat("=", 50)
 
 end
 
