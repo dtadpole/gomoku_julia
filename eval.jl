@@ -1,17 +1,26 @@
 include("./mcts.jl")
 
 
+"""Model path"""
+modelPath = (id::Int; tag = "curr") -> begin
+    model_path = "./trained/$(id)/model_$(t.size())x$(t.size()).$(tag)"
+    if !isdir(dirname(model_path))
+        mkpath(dirname(model_path))
+    end
+    return model_path
+end
+
 function model_step(game::Game, model::Model)
 
     TEMPERATURE = args["mcts_temperature"]
-
-    # create mcts node
-    node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
 
     if game.is_over()
         @error "Game is over"
         return nothing
     end
+
+    # create mcts node
+    node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
 
     # mcts play
     while node._N < args["mcts_n"]
@@ -74,11 +83,11 @@ function human_step(game::Game)
 
 end
 
-function player_function(player::String)
+function player_function(player::String; eval_id=1)
 
     if player == "curr"
 
-        filename = "./model/trained_$(args["game_size"])x$(args["game_size"]).curr"
+        filename = modelPath(eval_id; tag="curr")
         model = Model(args["game_size"], channels=args["model_channels"])
         model.load(filename)
         testmode!(model)
@@ -86,7 +95,7 @@ function player_function(player::String)
 
     elseif player == "best"
 
-        filename = "./model/trained_$(args["game_size"])x$(args["game_size"]).best"
+        filename = modelPath(eval_id; tag="best")
         model = Model(args["game_size"], channels=args["model_channels"])
         if isfile(filename)
             # load model if best file exist
@@ -145,8 +154,8 @@ function eval_run()
     player_2_wins = 0
     draws = 0
 
-    player1_function, model_1 = player_function(args["player_1"])
-    player2_function, model_2 = player_function(args["player_2"])
+    player1_function, model_1 = player_function(args["player_1"], eval_id=args["eval_id"])
+    player2_function, model_2 = player_function(args["player_2"], eval_id=args["eval_id"])
 
     for i in 1:args["eval_playouts"]
         try
@@ -177,8 +186,9 @@ function eval_run()
     @info repeat("=", 50)
     if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
         @info "Replacing best model with current model ..."
-        backup_file("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
-        model_1.save("./model/trained_$(args["game_size"])x$(args["game_size"]).best")
+        best_filename = modelPath(args["eval_id"]; tag="best")
+        backup_file(best_filename)
+        model_1.save(best_filename)
         @info "Replaced best model with current model !"
         @info repeat("=", 50)
     end
