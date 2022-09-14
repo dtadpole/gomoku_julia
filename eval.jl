@@ -2,8 +2,8 @@ include("./mcts.jl")
 
 
 """Model path"""
-modelPath = (id::Int; tag = "curr") -> begin
-    model_path = "./trained/$(id)/model_$(t.size())x$(t.size()).$(tag)"
+modelPath = (id::Int; size=args["model_size"], tag="curr") -> begin
+    model_path = "./trained/$(id)/model_$(size)x$(size).$(tag)"
     if !isdir(dirname(model_path))
         mkpath(dirname(model_path))
     end
