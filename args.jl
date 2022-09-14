@@ -121,10 +121,10 @@ function parse_commandline()
         arg_type = Float32
         default = Float32(0.5)
 
-        "--exp_sample_random"
-        help = "experience sample random"
+        "--exp_sample_sequential"
+        help = "experience sample sequentially"
         arg_type = Bool
-        default = false
+        default = true
 
         "--exp_server"
         help = "experience server"

@@ -137,7 +137,7 @@ mutable struct Train
                             # print separator
                             @info repeat("-", 50)
 
-                            if args["exp_sample_random"] == false
+                            if args["exp_sample_sequential"]
                                 # sample once for all epoches when sample sequentially
                                 (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
                                 # always add BATCH_SIZE * BATCH_NUM to trainedCount
@@ -146,7 +146,7 @@ mutable struct Train
 
                             for epoch in 1:TRAIN_EPOCHS
 
-                                if args["exp_sample_random"] == true
+                                if !args["exp_sample_sequential"]
                                     # re-sample each epoch
                                     (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
                                 end
@@ -180,7 +180,7 @@ mutable struct Train
 
                                     Flux.Optimise.update!(t._experiences.opt(id), params, grads)
 
-                                    if args["exp_sample_random"] == true
+                                    if !args["exp_sample_sequential"]
                                         t._experiences.addTrainedCount(id, BATCH_SIZE)
                                     end
 
