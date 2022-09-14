@@ -82,14 +82,14 @@ mutable struct Train
 
             # initialize optimizer
             opt = AdamW(args["learning_rate"], (args["adamw_beta1"], args["adamw_beta2"]), args["adamw_weight_decay"])
-            @info "[$(id)] Initialize Optimizer [η=$(round(opt[1].eta, digits=5)), β=$(round.(opt[1].beta, digits=4)), decay=$(opt[2].wd)]"
+            @info "[$(id)] Initialize Optimizer [η=$(round(opt[1].eta, digits=4)), β=$(round.(opt[1].beta, digits=4)), decay=$(opt[2].wd)]"
             # load optimizer if exists
             opt_filename = t.optPath(id)
             if isfile(opt_filename)
                 @info repeat("-", 50)
                 @info "[$(id)] Loading Optimizer from [$(opt_filename)] ..."
                 opt = load_optimizer(opt_filename)
-                @info "[$(id)] Loaded Optimizer [η=$(round(opt[1].eta, digits=5)), β=$(round.(opt[1].beta, digits=4)), decay=$(opt[2].wd)]"
+                @info "[$(id)] Loaded Optimizer [η=$(round(opt[1].eta, digits=4)), β=$(round.(opt[1].beta, digits=4)), decay=$(opt[2].wd)]"
             end
             # move to gpu
             if args["model_cuda"] >= 0
@@ -239,7 +239,7 @@ mutable struct Train
                             # save optimizer
                             opt_ = t._experiences.opt(id)
                             opt_filename = t.optPath(id)
-                            @info "[$(id)] Saving optimizer to [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=5)), β=$(round.(opt_[1].beta, digits=4)), decay=$(opt_[2].wd)] ..."
+                            @info "[$(id)] Saving optimizer to [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), decay=$(opt_[2].wd)] ..."
                             backup_file(opt_filename)
                             save_optimizer(opt_filename, opt_)
 
