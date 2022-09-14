@@ -166,7 +166,7 @@ function eval_run()
     eval_id = args["eval_id"]
 
     @info repeat("-", 50)
-    @info "[$(eval_id)] Starting evaluation [$(args["player_1"])] vs [$(args["player_2"])] - [$(args["eval_n"])] playouts"
+    @info "[$(eval_id)] Starting evaluation [$(args["player_1"])] vs [$(args["player_2"])] - [$(args["eval_playouts"]) playouts]"
     @info repeat("-", 50)
 
     player1_function, model_1 = player_function(args["player_1"], eval_id=eval_id)
