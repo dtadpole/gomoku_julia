@@ -141,7 +141,7 @@ mutable struct Train
                                 # sample once for all epoches when sample sequentially
                                 (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
                                 # always add BATCH_SIZE * BATCH_NUM to trainedCount
-                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM)
+                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS)
                             end
 
                             for epoch in 1:TRAIN_EPOCHS
