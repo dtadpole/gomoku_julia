@@ -137,10 +137,17 @@ mutable struct Train
                             # print separator
                             @info repeat("-", 50)
 
+                            if args["exp_sample_random"] == false
+                                # sample once for all epoches when sample sequentially
+                                (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+                            end
+
                             for epoch in 1:TRAIN_EPOCHS
 
-                                # re-sample each epoch
-                                (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+                                if args["exp_sample_random"] == true
+                                    # re-sample each epoch
+                                    (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+                                end
 
                                 # keeps previous policy
                                 prev_policy, _ = t._experiences.model(id).forward(states)
