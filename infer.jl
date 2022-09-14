@@ -16,6 +16,11 @@ function download_model(id::Int; prev_model=nothing)
     io = IOBuffer(r.body)
     _id, _size, _channels, _chain = deserialize(io)
 
+    # move model to CPU if needed
+    if args["model_cuda"] >= 0
+        _chain = _chain |> gpu
+    end
+
     # create new model
     model = Model(_size, channels=_channels)
     Flux.loadmodel!(model._model, _chain)

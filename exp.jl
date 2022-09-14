@@ -178,7 +178,7 @@ mutable struct Experiences
             HTTP.register!(router, "GET", "/model/{id}", (req) -> begin
                 id = parse(Int, HTTP.getparams(req)["id"])
                 io = IOBuffer()
-                serialize(io, (id, e._model_list[id].size(), e._model_list[id].channels(), e._model_list[id]._model))
+                serialize(io, (id, e._model_list[id].size(), e._model_list[id].channels(), e._model_list[id]._model |> cpu))
                 return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
             end)
 
