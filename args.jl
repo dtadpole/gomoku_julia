@@ -154,10 +154,10 @@ function parse_commandline()
         range_tester = (x -> x >= 1)
         default = 2
 
-        "--family_allow_duplicates"
-        help = "family allow duplicates"
+        "--family_allow_self_play"
+        help = "family allow self play"
         arg_type = Bool
-        default = false
+        default = true
 
     end
 

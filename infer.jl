@@ -97,6 +97,6 @@ function infer_playouts(id_1::Int, id_2::Int)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    id_list = sample(1:args["family_size"], 2, replace=args["family_allow_duplicates"])
+    id_list = sample(1:args["family_size"], 2, replace=args["family_allow_self_play"])
     infer_playouts(id_list...)
 end
