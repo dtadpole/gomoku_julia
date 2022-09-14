@@ -64,12 +64,12 @@ function parse_commandline()
         "--train_batch_size"
         help = "train batch size"
         arg_type = Int
-        default = 4096
+        default = 1024
 
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 2
+        default = 8
 
         "--train_epochs"
         help = "train epochs"
@@ -114,7 +114,7 @@ function parse_commandline()
         "--exp_max"
         help = "experience max"
         arg_type = Int
-        default = 400_000
+        default = 500_000
 
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
