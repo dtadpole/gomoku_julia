@@ -96,7 +96,7 @@ mutable struct MctsNode
         node.travelBranch = (depth::Int = 1_000) -> begin
             if node._game.is_over()
                 node.updateBranch(-node._game.score() * sign(node._game.turn()))
-            elseif depth == 0
+            elseif depth <= 0
                 # state = node._game.state()
                 # if args["model_cuda"] >= 0
                 #     state = state |> gpu
