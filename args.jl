@@ -49,7 +49,7 @@ function parse_commandline()
         "--mcts_depth"
         help = "mcts depth"
         arg_type = Int
-        default = 10
+        default = 20
 
         "--mcts_gamma"
         help = "mcts gamma"
@@ -64,12 +64,12 @@ function parse_commandline()
         "--train_batch_size"
         help = "train batch size"
         arg_type = Int
-        default = 1024
+        default = 16_384 # 256, 1_024, 4_096, 16_384
 
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 8
+        default = 1 # 1, 2, 4, 8, 16, 32, 64
 
         "--train_epochs"
         help = "train epochs"
@@ -114,7 +114,7 @@ function parse_commandline()
         "--exp_max"
         help = "experience max"
         arg_type = Int
-        default = 500_000
+        default = 800_000
 
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
