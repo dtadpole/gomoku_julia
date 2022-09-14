@@ -269,7 +269,7 @@ mutable struct Train
 
                     GC.gc(true)
 
-                    if args["model_cuda"] > 0
+                    if args["model_cuda"] >= 0
                         # @info repeat("-", 50)
                         CUDA.reclaim()
                         # CUDA.memory_status()
