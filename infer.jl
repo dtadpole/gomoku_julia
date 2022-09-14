@@ -14,16 +14,16 @@ function download_model(id::Int; prev_model=nothing)
     r = HTTP.request(:GET, "$(url)")
     @info "[$(id)] Requested model [$(url)] : [status = $(r.status)]"
     io = IOBuffer(r.body)
-    _id, _size, _channels, _model_params = deserialize(io)
+    _id, _size, _channels, _chain = deserialize(io)
 
     if prev_model !== nothing && _size == prev_model.size() && _channels == prev_model.channels()
         # reuse previous model if size and channels are the same
         model = prev_model
-        Flux.loadmodel!(model._model, _model_params)
+        Flux.loadmodel!(model._model, _chain)
     else
         # create new model
         model = Model(_size, channels=_channels)
-        Flux.loadmodel!(model._model, _model_params)
+        Flux.loadmodel!(model._model, _chain)
     end
     # testmode!(model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
