@@ -13,7 +13,7 @@ mutable struct MctsNode
     _P::Float32
     _Q::Float32
     # _U::Float32
-    # _V::Float32
+    _Pi_V::Union{Tuple{Vector{Float32},Float32},Nothing}
 
     # functions
     size::Function
@@ -25,12 +25,12 @@ mutable struct MctsNode
     updateBranch::Function
     travelBranch::Function
     rootN::Function
-    rootV::Function
+    rootQ::Function
 
     # constructor
     function MctsNode(game::Game, model::Model; cpuct=3.0, gamma=0.98, parent=nothing, P=0.0)
 
-        node = new(game, model, cpuct, gamma, parent, nothing, 0, P, 0.0)
+        node = new(game, model, cpuct, gamma, parent, nothing, 0, P, 0.0, nothing)
 
         """Size"""
         node.size = () -> node._game.size()
@@ -46,17 +46,30 @@ mutable struct MctsNode
         """Children"""
         node.children = () -> node._children
 
+        function _calc_Pi_V()
+            if node._Pi_V === nothing
+                state = node._game.state()
+                if args["model_cuda"] >= 0
+                    state = state |> gpu
+                end
+                pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
+                node._Pi_V = (reshape(Array(pi), node.size()^2), Array(v)[1])
+            end
+            return node._Pi_V
+        end
+
         """Expand children"""
         node.expandChildren = () -> begin
             if node._game.is_over()
                 error("Cannot expand children - game is over")
             end
-            state = node._game.state()
-            if args["model_cuda"] >= 0
-                state = state |> gpu
-            end
-            pi, _ = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
-            Pa = reshape(Array(pi), node.size()^2) .* node._game.available_actions()
+            # state = node._game.state()
+            # if args["model_cuda"] >= 0
+            #     state = state |> gpu
+            # end
+            # pi, _ = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
+            pi, _ = _calc_Pi_V()
+            Pa = pi .* node._game.available_actions()
             node._children = Array{Union{MctsNode,Nothing},1}(nothing, node.size()^2)
             for i in 1:node.size()^2
                 if Pa[i] > 0.0
@@ -80,16 +93,25 @@ mutable struct MctsNode
         end
 
         """Travel branch"""
-        node.travelBranch = () -> begin
+        node.travelBranch = (depth::Int = 1_000) -> begin
             if node._game.is_over()
                 node.updateBranch(-node._game.score() * sign(node._game.turn()))
+            elseif depth == 0
+                # state = node._game.state()
+                # if args["model_cuda"] >= 0
+                #     state = state |> gpu
+                # end
+                # _, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
+                # node._V = Array(v)[1]
+                _, v = _calc_Pi_V()
+                node.updateBranch(v)
             else
                 if node._children === nothing
                     node.expandChildren()
                 end
                 values = [node._children[i] === nothing ? -Inf : node._children[i].nodeValue() for i in 1:node.size()^2]
                 i = argmax(values)
-                node._children[i].travelBranch()
+                node._children[i].travelBranch(depth - 1)
             end
         end
 
@@ -104,8 +126,8 @@ mutable struct MctsNode
             return pi
         end
 
-        """Root V"""
-        node.rootV = () -> begin
+        """Root Q"""
+        node.rootQ = () -> begin
             return node._Q
         end
 
@@ -162,13 +184,13 @@ function mcts_play_game(model_1::Model, model_2::Model)
         # play
         prior_N = node._N
         while node._N < args["mcts_n"]
-            node.travelBranch()
+            node.travelBranch(args["mcts_depth"])
         end
         post_N = node._N
 
         # get distribution
         pi = reshape(node.rootN(), (SIZE, SIZE))
-        v = node.rootV()
+        v = node.rootQ()
         push!(experiences, (game.state(), pi, v))
 
         # play action

@@ -44,7 +44,12 @@ function parse_commandline()
         "--mcts_cpuct"
         help = "mcts cpuct"
         arg_type = Float32
-        default = Float32(20.0)
+        default = Float32(10.0)
+
+        "--mcts_depth"
+        help = "mcts depth"
+        arg_type = Int
+        default = 10
 
         "--mcts_gamma"
         help = "mcts gamma"
