@@ -19,13 +19,17 @@ function model_step(game::Game, model::Model)
         return nothing
     end
 
+    start_time = time()
+
     # create mcts node
     node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
 
     # mcts play
+    prior_N = node._N
     while node._N < args["mcts_n"]
         node.travelBranch()
     end
+    post_N = node._N
 
     # policy distribution
     pa = reshape(node.rootN(), (model.size() * model.size()))
@@ -40,7 +44,8 @@ function model_step(game::Game, model::Model)
     # play action
     game.play_action(action)
     if args["game_display"]
-        @info maxk(node.rootN(), 5)
+        duration = round(time() - start_time, digits=1)
+        @info "[$(duration)s : $(prior_N) -> $(post_N)] $(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)], ", "))"
         # display
         game.display()
     end
