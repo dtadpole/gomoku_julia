@@ -90,6 +90,7 @@ function player_function(player::String; eval_id=1)
         filename = modelPath(eval_id; tag="curr")
         model = Model(args["game_size"], channels=args["model_channels"])
         model.load(filename)
+        @info "[$(eval_id)] Loaded model $(filename) ..."
         testmode!(model)
         return (game) -> model_step(game, model), model
 
@@ -100,6 +101,7 @@ function player_function(player::String; eval_id=1)
         if isfile(filename)
             # load model if best file exist
             model.load(filename)
+            @info "[$(eval_id)] Loaded model $(filename) ..."
         end
         testmode!(model)
         return (game) -> model_step(game, model), model
