@@ -50,6 +50,13 @@ function model_step(game::Game, model::Model)
         game.display()
     end
 
+    # GC & reclaim CUDA memory
+    GC.gc(true)
+    if args["model_cuda"] >= 0
+        CUDA.reclaim()
+        # CUDA.memory_status()
+        # println()
+    end
 
     return nothing
 

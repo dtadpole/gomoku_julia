@@ -206,7 +206,8 @@ function mcts_play_game(model_1::Model, model_2::Model)
         node, node_opposite = node_opposite, node
         model, model_opposite = model_opposite, model
 
-        # reclaim CUDA memory
+        # GC & reclaim CUDA memory
+        GC.gc(true)
         if args["model_cuda"] >= 0
             CUDA.reclaim()
             # CUDA.memory_status()

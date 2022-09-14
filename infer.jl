@@ -81,12 +81,11 @@ function infer_playouts()
 
         finally
 
-            @info repeat("-", 50)
-
+            # GC & reclaim CUDA memory
             GC.gc(true)
-
             if args["model_cuda"] >= 0
                 CUDA.reclaim()
+                @info repeat("-", 50)
                 CUDA.memory_status()
                 println()
             end
