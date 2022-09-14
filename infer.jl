@@ -81,6 +81,8 @@ function infer_playouts()
 
         finally
 
+            @info repeat("-", 50)
+
             GC.gc(true)
 
             CUDA.memory_status()
