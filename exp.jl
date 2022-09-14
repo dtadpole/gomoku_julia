@@ -126,28 +126,49 @@ mutable struct Experiences
             # record total experience size
             e._total_count[id] += 8
 
-            # target experience size
-            target_exp_size = max(args["exp_min"], min(args["exp_max"],
-                floor(Int, (e._total_count[id] - args["exp_min"]) * args["exp_preserve_ratio"]) + args["exp_min"]))
+            if args["exp_sample_random"]
+                # target experience size
+                target_exp_size = max(args["exp_min"], min(args["exp_max"],
+                    floor(Int, (e._total_count[id] - args["exp_min"]) * args["exp_preserve_ratio"]) + args["exp_min"]))
 
-            # truncate experiences
-            if length(e._exp_list[id]) > target_exp_size
-                e._exp_list[id] = e._exp_list[id][length(e._exp_list[id])-target_exp_size+1:end]
+                # truncate experiences
+                if length(e._exp_list[id]) > target_exp_size
+                    e._exp_list[id] = e._exp_list[id][length(e._exp_list[id])-target_exp_size+1:end]
+                end
             end
         end
 
         """Sample experience"""
         e.sampleExperience = (id, sample_size::Int) -> begin
-            s, pi, v = unzip(sample(e._exp_list[id], ProbabilityWeights(_WEIGHTS[1:min(length(e._exp_list[id]), args["exp_max"])]), sample_size, replace=false))
-            s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
-            pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
-            v = reshape(cat(v...; dims=2), (1, sample_size))
-            if args["model_cuda"] >= 0
-                s = s |> gpu
-                pi = pi |> gpu
-                v = v |> gpu
+            if args["exp_sample_random"]
+                # sample randomly
+                s, pi, v = unzip(sample(e._exp_list[id], ProbabilityWeights(_WEIGHTS[1:min(length(e._exp_list[id]), args["exp_max"])]), sample_size, replace=false))
+                # reshape to tensor
+                s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
+                pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
+                v = reshape(cat(v...; dims=2), (1, sample_size))
+                if args["model_cuda"] >= 0
+                    s = s |> gpu
+                    pi = pi |> gpu
+                    v = v |> gpu
+                end
+                return s, pi, v
+            else
+                # sample sequentially
+                s, pi, v = unzip(e._exp_list[id][1:sample_size])
+                # reshape to tensor
+                s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
+                pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
+                v = reshape(cat(v...; dims=2), (1, sample_size))
+                if args["model_cuda"] >= 0
+                    s = s |> gpu
+                    pi = pi |> gpu
+                    v = v |> gpu
+                end
+                # remove sampled experiences
+                e._exp_list[id] = e._exp_list[id][sample_size+1:end]
+                return s, pi, v
             end
-            return s, pi, v
         end
 
         """Start server"""

@@ -64,12 +64,12 @@ function parse_commandline()
         "--train_batch_size"
         help = "train batch size"
         arg_type = Int
-        default = 16_384 # 256, 1_024, 4_096, 16_384
+        default = 4_096 # 256, 1_024, 4_096, 16_384
 
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 1 # 1, 2, 4, 8, 16, 32, 64
+        default = 2 # 1, 2, 4, 8, 16, 32, 64
 
         "--train_epochs"
         help = "train epochs"
@@ -120,6 +120,11 @@ function parse_commandline()
         help = "experience preserve ratio"
         arg_type = Float32
         default = Float32(0.5)
+
+        "--exp_sample_random"
+        help = "experience sample random"
+        arg_type = Bool
+        default = false
 
         "--exp_server"
         help = "experience server"
