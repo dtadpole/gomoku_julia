@@ -44,7 +44,7 @@ function parse_commandline()
         "--mcts_cpuct"
         help = "mcts cpuct"
         arg_type = Float32
-        default = Float32(10.0)
+        default = Float32(20.0)
 
         "--mcts_gamma"
         help = "mcts gamma"
@@ -152,7 +152,7 @@ function parse_commandline()
         help = "family size"
         arg_type = Int
         range_tester = (x -> x >= 1)
-        default = 3
+        default = 1
 
         "--family_allow_self_play"
         help = "family allow self play"
