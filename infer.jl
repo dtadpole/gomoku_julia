@@ -16,7 +16,7 @@ function download_model(id::Int; prev_model=nothing)
     io = IOBuffer(r.body)
     _id, _size, _channels, _model_params = deserialize(io)
 
-    if prev_model !== nothing || _size == prev_model.size() || _channels == prev_model.channels()
+    if prev_model !== nothing && _size == prev_model.size() && _channels == prev_model.channels()
         # reuse previous model if size and channels are the same
         model = prev_model
         Flux.loadmodel!(model._model, _model_params)
