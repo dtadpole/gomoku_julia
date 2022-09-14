@@ -152,7 +152,7 @@ function parse_commandline()
         help = "family size"
         arg_type = Int
         range_tester = (x -> x >= 1)
-        default = 2
+        default = 3
 
         "--family_allow_self_play"
         help = "family allow self play"
