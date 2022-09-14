@@ -1,2 +1,2 @@
 # gomoku_julia
-AlphaZero implementation of Gomoku using Julia
+Julia implementation of Gomoku following AlphaZero

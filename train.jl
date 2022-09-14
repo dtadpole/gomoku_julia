@@ -266,7 +266,6 @@ mutable struct Train
 
                 finally
 
-
                     # GC & reclaim CUDA memory
                     GC.gc(true)
                     if args["model_cuda"] >= 0
