@@ -210,17 +210,17 @@ mutable struct Train
 
                                 if kl_epoch_mean > args["train_kl_target"] * 2.0
                                     new_learning_rate = max(t._experiences.opt(id)[1].eta / 1.5, args["learning_rate"] / args["learning_rate_range"])
-                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=5))] ."
+                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=4))] ."
                                     # update learning rate
                                     t._experiences.opt(id)[1].eta = new_learning_rate
                                 elseif kl_epoch_mean < args["train_kl_target"] / 2.0
                                     new_learning_rate = min(t._experiences.opt(id)[1].eta * 1.5, args["learning_rate"] * args["learning_rate_range"])
-                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=5))] ."
+                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=4))] ."
                                     # update learning rate
                                     t._experiences.opt(id)[1].eta = new_learning_rate
                                 else
                                     learning_rate = t._experiences.opt(id)[1].eta
-                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(learning_rate, digits=5))] ."
+                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(learning_rate, digits=4))] ."
                                 end
 
                             end
