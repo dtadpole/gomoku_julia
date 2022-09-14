@@ -29,7 +29,7 @@ function download_model(id::Int; prev_model=nothing)
 end
 
 """infer playouts"""
-function infer_playouts(id_1::Int, id_2::Int)
+function infer_playouts()
 
     global URL_BASE
 
@@ -44,6 +44,8 @@ function infer_playouts(id_1::Int, id_2::Int)
     for i in 1:args["infer_playouts"]
 
         try
+
+            id_1, id_2 = sample(1:args["family_size"], 2, replace=args["family_allow_self_play"])
 
             @info repeat("-", 50)
             @info "Inference Iteration [$(i)] ..."
@@ -97,6 +99,5 @@ function infer_playouts(id_1::Int, id_2::Int)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    id_list = sample(1:args["family_size"], 2, replace=args["family_allow_self_play"])
-    infer_playouts(id_list...)
+    infer_playouts()
 end
