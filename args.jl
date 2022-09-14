@@ -109,12 +109,12 @@ function parse_commandline()
         "--exp_max"
         help = "experience max"
         arg_type = Int
-        default = 800_000
+        default = 400_000
 
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
         arg_type = Float32
-        default = Float32(0.33)
+        default = Float32(0.4)
 
         "--exp_server"
         help = "experience server"
