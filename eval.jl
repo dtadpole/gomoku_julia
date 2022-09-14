@@ -154,13 +154,15 @@ function eval_run()
     player_2_wins = 0
     draws = 0
 
-    player1_function, model_1 = player_function(args["player_1"], eval_id=args["eval_id"])
-    player2_function, model_2 = player_function(args["player_2"], eval_id=args["eval_id"])
+    eval_id = args["eval_id"]
+
+    player1_function, model_1 = player_function(args["player_1"], eval_id=eval_id)
+    player2_function, model_2 = player_function(args["player_2"], eval_id=eval_id)
 
     for i in 1:args["eval_playouts"]
         try
             @info repeat("-", 50)
-            @info "Evaluation Iteration [$(i)] : [$(args["player_1"]) -> X] vs [$(args["player_2"]) -> O]"
+            @info "[$(eval_id)] Evaluation Iteration [$(i)] : [$(args["player_1"]) -> X] vs [$(args["player_2"]) -> O]"
             @info repeat("-", 50)
             game_turn = rand() > 0.5 ? 1.0 : -1.0
             score = eval_playout(player1_function, player2_function; turn=game_turn)
@@ -172,11 +174,11 @@ function eval_run()
                 draws += 1
             end
         catch e
-            @error "Error" exception = (e, catch_backtrace())
+            @error "[$(eval_id)] Error" exception = (e, catch_backtrace())
             sleep(1.4^(i - 1))
         finally
             @info repeat("-", 50)
-            @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
+            @info "[$(eval_id)] Tally : [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
             sleep(1)
         end
     end
@@ -185,11 +187,11 @@ function eval_run()
     @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
     @info repeat("=", 50)
     if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
-        @info "Replacing best model with current model ..."
+        @info "[$(eval_id)] Replacing best model with current model ..."
         best_filename = modelPath(args["eval_id"]; tag="best")
         backup_file(best_filename)
         model_1.save(best_filename)
-        @info "Replaced best model with current model !"
+        @info "[$(eval_id)] Replaced best model with current model !"
         @info repeat("=", 50)
     end
 
