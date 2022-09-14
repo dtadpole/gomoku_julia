@@ -165,7 +165,7 @@ function eval_run()
 
     eval_id = args["eval_id"]
 
-    @info repeat("-", 50)
+    @info repeat("=", 50)
     @info "[$(eval_id)] Starting evaluation [$(args["player_1"])] vs [$(args["player_2"])] - [$(args["eval_playouts"]) playouts]"
     @info repeat("-", 50)
 
@@ -198,15 +198,15 @@ function eval_run()
 
     @info repeat("=", 50)
     @info "[$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
-    @info repeat("=", 50)
     if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
+        @info repeat("-", 50)
         @info "[$(eval_id)] Replacing best model with current model ..."
         best_filename = modelPath(args["eval_id"]; tag="best")
         backup_file(best_filename)
         model_1.save(best_filename)
         @info "[$(eval_id)] Replaced best model with current model !"
-        @info repeat("=", 50)
     end
+    @info repeat("=", 50)
 
 end
 
