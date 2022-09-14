@@ -134,6 +134,9 @@ mutable struct Train
 
                         if t._experiences.trainedCount(id) + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
+                            # print separator
+                            @info repeat("-", 50)
+
                             for epoch in 1:TRAIN_EPOCHS
 
                                 # re-sample each epoch
@@ -150,9 +153,6 @@ mutable struct Train
                                 pi_list = Vector{Float32}()
                                 v_list = Vector{Float32}()
                                 panelty_list = Vector{Float32}()
-
-                                # print separator
-                                @info repeat("-", 50)
 
                                 @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))] ..."
 
