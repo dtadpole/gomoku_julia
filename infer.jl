@@ -16,16 +16,11 @@ function download_model(id::Int; prev_model=nothing)
     io = IOBuffer(r.body)
     _id, _size, _channels, _chain = deserialize(io)
 
-    if prev_model !== nothing && _size == prev_model.size() && _channels == prev_model.channels()
-        # reuse previous model if size and channels are the same
-        model = prev_model
-        Flux.loadmodel!(model._model, _chain)
-    else
-        # create new model
-        model = Model(_size, channels=_channels)
-        Flux.loadmodel!(model._model, _chain)
-    end
+    # create new model
+    model = Model(_size, channels=_channels)
+    Flux.loadmodel!(model._model, _chain)
     # testmode!(model)
+
     params_size = sum([length(l) for l in Flux.params(model._model)])
     @info "[$(id)] Loaded model [$(url)] : [$(model.size())x$(model.size()), c=$(model.channels()), p=$(params_size)]"
 
@@ -34,7 +29,7 @@ function download_model(id::Int; prev_model=nothing)
 end
 
 """infer playouts"""
-function infer_playouts()
+function infer_playouts(id_1::Int, id_2::Int)
 
     global URL_BASE
 
@@ -56,13 +51,13 @@ function infer_playouts()
 
             # id_1, model_1 = download_model(1, prev_model=model_1) # reuse previous model_1 if exists
             # id_2, model_2 = download_model(2, prev_model=model_2) # reuse previous model_2 if exists
-            id_1, model_1 = download_model(1, prev_model=nothing) # do NOT reuse previous model_1 if exists
-            id_2, model_2 = download_model(2, prev_model=nothing) # do NOT reuse previous model_2 if exists
+            sid_1, model_1 = download_model(id_1) # do NOT reuse previous model_1 if exists
+            sid_2, model_2 = download_model(id_2) # do NOT reuse previous model_2 if exists
 
             @info repeat("-", 50)
             experiences, game_init_turn = mcts_play_game(model_1, model_2)
 
-            id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
+            id_first, id_second = game_init_turn > 0 ? (sid_1, sid_2) : (sid_2, sid_1)
 
             experiences_with_id = [(mod(step, 2) == 1 ? id_first : id_second, s, pi, v) for (step, (s, pi, v)) in enumerate(experiences)]
 
@@ -102,5 +97,6 @@ function infer_playouts()
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    infer_playouts()
+    id_list = sample(1:args["family_size"], 2, replace=args["family_allow_duplicates"])
+    infer_playouts(id_list...)
 end

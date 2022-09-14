@@ -148,6 +148,17 @@ function parse_commandline()
         range_tester = (x -> x ∈ ["curr", "best", "human"])
         default = "best"
 
+        "--family_size"
+        help = "family size"
+        arg_type = Int
+        range_tester = (x -> x >= 1)
+        default = 2
+
+        "--family_allow_duplicates"
+        help = "family allow duplicates"
+        arg_type = Bool
+        default = false
+
     end
 
     return parse_args(s)
