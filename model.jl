@@ -5,6 +5,9 @@ using CUDA
 using JLD
 using Serialization
 using StatsBase
+using HTTP
+
+global URL_BASE = URL_BASE = "http://$(args["exp_server"]):$(args["exp_port"])"
 
 # custom split layer
 struct Split{T}
@@ -17,6 +20,7 @@ Flux.@functor Split
 
 (m::Split)(x::AbstractArray) = map(f -> f(x), m.paths)
 
+"""backup file"""
 function backup_file(filename)
     filename_bak = "$(filename).bak"
     filename_bak_bak = "$(filename_bak).bak"
@@ -30,6 +34,35 @@ function backup_file(filename)
         mv(filename, filename_bak, force=true)
     end
     return nothing
+end
+
+"""download model"""
+function download_model(id::Int; prev_model=nothing)
+
+    global URL_BASE
+
+    url = "$(URL_BASE)/model/$(id)"
+
+    r = HTTP.request(:GET, "$(url)")
+    @info "[$(id)] Requested model [$(url)] : [status = $(r.status)]"
+    io = IOBuffer(r.body)
+    _id, _size, _channels, _chain = deserialize(io)
+
+    # move model to CPU if needed
+    if args["model_cuda"] >= 0
+        _chain = _chain |> gpu
+    end
+
+    # create new model
+    model = Model(_size, channels=_channels)
+    Flux.loadmodel!(model._model, _chain)
+    # testmode!(model)
+
+    params_size = sum([length(l) for l in Flux.params(model._model)])
+    @info "[$(id)] Loaded model [$(url)] : [$(model.size())x$(model.size()), c=$(model.channels()), p=$(params_size)]"
+
+    return _id, model
+
 end
 
 

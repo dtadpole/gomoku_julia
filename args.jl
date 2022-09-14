@@ -144,13 +144,13 @@ function parse_commandline()
         "--player_1"
         help = "player 1"
         arg_type = String
-        range_tester = (x -> x ∈ ["curr", "best", "human"])
-        default = "curr"
+        range_tester = (x -> x ∈ ["download", "curr", "best", "human"])
+        default = "download"
 
         "--player_2"
         help = "player 2"
         arg_type = String
-        range_tester = (x -> x ∈ ["curr", "best", "human"])
+        range_tester = (x -> x ∈ ["download", "curr", "best", "human"])
         default = "best"
 
         "--family_size"

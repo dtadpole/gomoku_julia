@@ -1,47 +1,9 @@
 include("./mcts.jl")
 
-using HTTP
-
-global URL_BASE = ""
-
-"""download model"""
-function download_model(id::Int; prev_model=nothing)
-
-    global URL_BASE
-
-    url = "$(URL_BASE)/model/$(id)"
-
-    r = HTTP.request(:GET, "$(url)")
-    @info "[$(id)] Requested model [$(url)] : [status = $(r.status)]"
-    io = IOBuffer(r.body)
-    _id, _size, _channels, _chain = deserialize(io)
-
-    # move model to CPU if needed
-    if args["model_cuda"] >= 0
-        _chain = _chain |> gpu
-    end
-
-    # create new model
-    model = Model(_size, channels=_channels)
-    Flux.loadmodel!(model._model, _chain)
-    # testmode!(model)
-
-    params_size = sum([length(l) for l in Flux.params(model._model)])
-    @info "[$(id)] Loaded model [$(url)] : [$(model.size())x$(model.size()), c=$(model.channels()), p=$(params_size)]"
-
-    return _id, model
-
-end
-
 """infer playouts"""
 function infer_playouts()
 
     global URL_BASE
-
-    server = args["exp_server"]
-    port = args["exp_port"]
-
-    URL_BASE = "http://$server:$port"
 
     model_1 = nothing
     model_2 = nothing
