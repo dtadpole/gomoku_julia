@@ -54,8 +54,10 @@ function infer_playouts()
             @info "Inference Iteration [$(i)] ..."
             @info repeat("-", 50)
 
-            id_1, model_1 = download_model(1, prev_model=model_1) # reuse previous model_1 if exists
-            id_2, model_2 = download_model(2, prev_model=model_2) # reuse previous model_2 if exists
+            # id_1, model_1 = download_model(1, prev_model=model_1) # reuse previous model_1 if exists
+            # id_2, model_2 = download_model(2, prev_model=model_2) # reuse previous model_2 if exists
+            id_1, model_1 = download_model(1, prev_model=nothing) # do NOT reuse previous model_1 if exists
+            id_2, model_2 = download_model(2, prev_model=nothing) # do NOT reuse previous model_2 if exists
 
             @info repeat("-", 50)
             experiences, game_init_turn = mcts_play_game(model_1, model_2)
