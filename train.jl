@@ -151,6 +151,9 @@ mutable struct Train
                                 v_list = Vector{Float32}()
                                 panelty_list = Vector{Float32}()
 
+                                # print separator
+                                @info repeat("-", 50)
+
                                 @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))] ..."
 
                                 for batch in 1:BATCH_NUM
