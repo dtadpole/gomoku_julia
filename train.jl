@@ -266,6 +266,12 @@ mutable struct Train
 
                 finally
 
+                    # @info repeat("-", 50)
+
+                    GC.gc(true)
+
+                    # CUDA.memory_status()
+
                     sleep(30)
 
                 end
