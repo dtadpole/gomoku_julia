@@ -266,7 +266,7 @@ mutable struct Train
 
                 finally
 
-                    sleep(20)
+                    sleep(30)
 
                 end
 
