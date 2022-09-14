@@ -2,7 +2,7 @@ include("./mcts.jl")
 
 
 """Model path"""
-modelPath = (id::Int; size=args["model_size"], tag="curr") -> begin
+modelPath = (id::Int; size=args["game_size"], tag="curr") -> begin
     model_path = "./trained/$(id)/model_$(size)x$(size).$(tag)"
     if !isdir(dirname(model_path))
         mkpath(dirname(model_path))
