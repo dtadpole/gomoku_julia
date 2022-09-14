@@ -70,18 +70,18 @@ mutable struct Model
             Conv((3, 3), channels * 4 => channels * 4, relu; pad=(1, 1)),
             Split(
                 Chain(
-                    Conv((1, 1), channels * 4 => channels, elu),
-                    x -> reshape(x, (channels * size * size, :)),
+                    Conv((1, 1), channels * 4 => div(channels, 2), elu),
+                    x -> reshape(x, (div(channels, 2) * size * size, :)),
                     Dropout(0.5),
-                    Dense(channels * size * size => size * size, elu),
+                    Dense(div(channels, 2) * size * size => size * size, elu),
                     # x -> log.(x + 1e-8), # add log layer
                     # softmax # softmax layer applies to only dims=1
                 ),
                 Chain(
-                    Conv((1, 1), channels * 4 => channels, elu),
-                    x -> reshape(x, (channels * size * size, :)),
+                    Conv((1, 1), channels * 4 => div(channels, 2), elu),
+                    x -> reshape(x, (div(channels, 2) * size * size, :)),
                     Dropout(0.5),
-                    Dense(channels * size * size => channels * 4, elu),
+                    Dense(div(channels, 2) * size * size => channels * 4, elu),
                     Dropout(0.5),
                     Dense(channels * 4 => 1, tanh)
                 )
