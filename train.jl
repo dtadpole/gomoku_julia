@@ -140,6 +140,8 @@ mutable struct Train
                             if args["exp_sample_random"] == false
                                 # sample once for all epoches when sample sequentially
                                 (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+                                # always add BATCH_SIZE * BATCH_NUM to trainedCount
+                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM)
                             end
 
                             for epoch in 1:TRAIN_EPOCHS
@@ -178,7 +180,9 @@ mutable struct Train
 
                                     Flux.Optimise.update!(t._experiences.opt(id), params, grads)
 
-                                    t._experiences.addTrainedCount(id, BATCH_SIZE)
+                                    if args["exp_sample_random"] == true
+                                        t._experiences.addTrainedCount(id, BATCH_SIZE)
+                                    end
 
                                     # calculate new policy
                                     new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
