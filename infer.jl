@@ -4,7 +4,8 @@ using HTTP
 
 global URL_BASE = ""
 
-function download_model(id::Int)
+"""download model"""
+function download_model(id::Int; prev_model=nothing)
 
     global URL_BASE
 
@@ -13,10 +14,17 @@ function download_model(id::Int)
     r = HTTP.request(:GET, "$(url)")
     @info "[$(id)] Requested model [$(url)] : [status = $(r.status)]"
     io = IOBuffer(r.body)
-    _id, _size, _channels, _model = deserialize(io)
+    _id, _size, _channels, _model_params = deserialize(io)
 
-    model = Model(_size, channels=_channels)
-    Flux.loadmodel!(model._model, _model)
+    if prev_model !== nothing || _size == prev_model.size() || _channels == prev_model.channels()
+        # reuse previous model if size and channels are the same
+        model = prev_model
+        Flux.loadmodel!(model._model, _model_params)
+    else
+        # create new model
+        model = Model(_size, channels=_channels)
+        Flux.loadmodel!(model._model, _model_params)
+    end
     # testmode!(model)
     params_size = sum([length(l) for l in Flux.params(model._model)])
     @info "[$(id)] Loaded model [$(url)] : [$(model.size())x$(model.size()), c=$(model.channels()), p=$(params_size)]"
@@ -25,7 +33,8 @@ function download_model(id::Int)
 
 end
 
-infer_playout = () -> begin
+"""infer playouts"""
+function infer_playouts()
 
     global URL_BASE
 
@@ -34,39 +43,44 @@ infer_playout = () -> begin
 
     URL_BASE = "http://$server:$port"
 
-    id_1, model_1 = download_model(1)
-    id_2, model_2 = download_model(2)
-
-    @info repeat("-", 50)
-    experiences, game_init_turn = mcts_play_game(model_1, model_2)
-
-    id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
-
-    experiences_with_id = [(mod(step, 2) == 1 ? id_first : id_second, s, pi, v) for (step, (s, pi, v)) in enumerate(experiences)]
-
-    io = IOBuffer()
-    serialize(io, experiences_with_id)
-
-    url = "$(URL_BASE)/experiences"
-    @info "Posting experiences [$(url)] [len = $(length(experiences))]"
-    r = HTTP.request(:POST, url, body=take!(io))
-    @info "Posted experiences [$(url)] [status = $(r.status)]"
-
-end
-
-if abspath(PROGRAM_FILE) == @__FILE__
+    model_1 = nothing
+    model_2 = nothing
 
     for i in 1:args["infer_playouts"]
+
         try
+
             @info repeat("-", 50)
             @info "Inference Iteration [$(i)] ..."
             @info repeat("-", 50)
-            infer_playout()
+
+            id_1, model_1 = download_model(1, prev_model=model_1) # reuse previous model_1 if exists
+            id_2, model_2 = download_model(2, prev_model=model_2) # reuse previous model_2 if exists
+
+            @info repeat("-", 50)
+            experiences, game_init_turn = mcts_play_game(model_1, model_2)
+
+            id_first, id_second = game_init_turn > 0 ? (id_1, id_2) : (id_2, id_1)
+
+            experiences_with_id = [(mod(step, 2) == 1 ? id_first : id_second, s, pi, v) for (step, (s, pi, v)) in enumerate(experiences)]
+
+            io = IOBuffer()
+            serialize(io, experiences_with_id)
+
+            url = "$(URL_BASE)/experiences"
+            @info "Posting experiences [$(url)] [len = $(length(experiences))]"
+            r = HTTP.request(:POST, url, body=take!(io))
+            @info "Posted experiences [$(url)] [status = $(r.status)]"
+
         catch e
+
             @error "Error" exception = (e, catch_backtrace())
             sleep(1.1^(i - 1))
+
         finally
+
             sleep(1)
+
         end
     end
 
@@ -74,4 +88,8 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @info "Inference Completed [$(args["infer_playouts"])] Iterations ."
     @info repeat("-", 50)
 
+end
+
+if abspath(PROGRAM_FILE) == @__FILE__
+    infer_playouts()
 end
