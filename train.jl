@@ -69,14 +69,14 @@ mutable struct Train
             # initialize model
             model = Model(args["game_size"], channels=args["model_channels"])
             params_size = sum([length(l) for l in Flux.params(model._model)])
-            @info "[$(id)] Initialize Model [$(model.size())x$(model.size())] [c=$(model.channels())] [p=$(params_size)]"
+            @info "[$(id)] Initialize Model [$(model.size())x$(model.size()), c=$(model.channels()), p=$(params_size)]"
             # load model if exists
             model_filename = t.modelPath(id)
             if isfile(model_filename)
                 @info repeat("-", 50)
                 @info "[$(id)] Loading Model from [$(model_filename)] ..."
                 model.load(model_filename)
-                @info "[$(id)] Loaded Model [$(model.size())x$(model.size())] [c=$(model.channels())] [p=$(params_size)]"
+                @info "[$(id)] Loaded Model [$(model.size())x$(model.size()), c=$(model.channels()), p=$(params_size)]"
             end
             push!(model_list, model)
 
@@ -205,7 +205,7 @@ mutable struct Train
                                 v_epoch = round(mean(v_list), digits=3)
                                 panelty_epoch = round(mean(panelty_list), digits=3)
 
-                                @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),pi) + ($(v_epoch),v) + ($(panelty_epoch),panelty)]"
+                                @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),π) + ($(v_epoch),v) + ($(panelty_epoch),H)]"
                                 # @info loss_list pi_list v_list panelty_list
 
                                 # check for kl divergence
@@ -235,20 +235,20 @@ mutable struct Train
                             model_ = t._experiences.model(id)
                             params_size = sum([length(l) for l in Flux.params(model_._model)])
                             model_filename = t.modelPath(id)
-                            @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size())] [c=$(model_.channels())] [p=$(params_size)] ..."
+                            @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size()), c=$(model_.channels()), p=$(params_size)]"
                             backup_file(model_filename)
                             model_.save(model_filename)
 
                             # save optimizer
                             opt_ = t._experiences.opt(id)
                             opt_filename = t.optPath(id)
-                            @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)] ..."
+                            @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)]"
                             backup_file(opt_filename)
                             save_optimizer(opt_filename, opt_)
 
                             # save experiences
                             exp_filename = t.expPath(id)
-                            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
+                            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))]"
                             backup_file(exp_filename)
                             t._experiences.save(id, exp_filename)
 
