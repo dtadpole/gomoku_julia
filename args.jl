@@ -114,7 +114,7 @@ function parse_commandline()
         "--exp_max"
         help = "experience max"
         arg_type = Int
-        default = 800_000
+        default = 200_000
 
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
