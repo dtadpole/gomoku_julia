@@ -29,7 +29,7 @@ function parse_commandline()
         "--model_loss_coef_entropy"
         help = "model loss entropy coefficient"
         arg_type = Float32
-        default = Float32(0.1)
+        default = Float32(0.2)
 
         "--model_loss_theta_entropy"
         help = "model loss theta coefficient"
