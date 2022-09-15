@@ -39,7 +39,7 @@ function parse_commandline()
         "--mcts_n"
         help = "mcts play count"
         arg_type = Int
-        default = 200
+        default = 400
 
         "--mcts_cpuct"
         help = "mcts cpuct"
@@ -49,7 +49,7 @@ function parse_commandline()
         "--mcts_depth"
         help = "mcts depth"
         arg_type = Int
-        default = 16
+        default = 12
 
         "--mcts_gamma"
         help = "mcts gamma"

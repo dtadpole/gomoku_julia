@@ -116,11 +116,6 @@ mutable struct MctsNode
             if node._game.is_over()
                 error("Cannot expand children - game is over")
             end
-            # state = node._game.state()
-            # if args["model_cuda"] >= 0
-            #     state = state |> gpu
-            # end
-            # pi, _ = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
             pi, _ = _calc_Pi_V()
             Pa = pi .* node._game.available_actions()
             node._children = Array{Union{MctsNode,Nothing},1}(nothing, node.size()^2)
@@ -150,12 +145,6 @@ mutable struct MctsNode
             if node._game.is_over()
                 node.updateBranch(-node._game.score() * sign(node._game.turn()))
             elseif depth <= 0
-                # state = node._game.state()
-                # if args["model_cuda"] >= 0
-                #     state = state |> gpu
-                # end
-                # _, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
-                # node._V = Array(v)[1]
                 _, v = _calc_Pi_V()
                 node.updateBranch(v)
             else
