@@ -132,11 +132,14 @@ mutable struct Train
 
                     if t._experiences.trainedCount(id) + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
-                        try
-                            # print separator
-                            @info repeat("-", 50)
+                        # print separator
+                        @info repeat("-", 50)
 
-                            for epoch in 1:TRAIN_EPOCHS
+                        for epoch in 1:TRAIN_EPOCHS
+
+                            try
+
+                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
 
                                 if args["exp_sample_sequential"]
                                     # re-sample each epoch
@@ -157,8 +160,6 @@ mutable struct Train
                                 pi_list = Vector{Float32}()
                                 v_list = Vector{Float32}()
                                 panelty_list = Vector{Float32}()
-
-                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
 
                                 for batch in 1:BATCH_NUM
 
@@ -232,48 +233,48 @@ mutable struct Train
                                     @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(learning_rate, digits=4))] ."
                                 end
 
-                            end
+                            catch e
 
-                            # print separator
-                            @info repeat("-", 50)
+                                @error "Error" exception = (e, catch_backtrace())
 
-                            # save model
-                            model_ = t._experiences.model(id)
-                            params_size = sum([length(l) for l in Flux.params(model_._model)])
-                            model_filename = t.modelPath(id)
-                            @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size()), c=$(model_.channels()), p=$(params_size)]"
-                            backup_file(model_filename)
-                            model_.save(model_filename)
+                            finally
 
-                            # save optimizer
-                            opt_ = t._experiences.opt(id)
-                            opt_filename = t.optPath(id)
-                            @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)]"
-                            backup_file(opt_filename)
-                            save_optimizer(opt_filename, opt_)
+                                if args["exp_sample_sequential"]
+                                    # always add BATCH_SIZE * BATCH_NUM to trainedCount
+                                    t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS)
+                                    t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
+                                end
 
-                            # save experiences
-                            exp_filename = t.expPath(id)
-                            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))]"
-                            backup_file(exp_filename)
-                            t._experiences.save(id, exp_filename)
-
-                            # print separator
-                            @info repeat("-", 50)
-
-                        catch e
-
-                            @error "Error" exception = (e, catch_backtrace())
-
-                        finally
-
-                            if args["exp_sample_sequential"]
-                                # always add BATCH_SIZE * BATCH_NUM to trainedCount
-                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS)
-                                t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
                             end
 
                         end
+
+                        # print separator
+                        @info repeat("-", 50)
+
+                        # save model
+                        model_ = t._experiences.model(id)
+                        params_size = sum([length(l) for l in Flux.params(model_._model)])
+                        model_filename = t.modelPath(id)
+                        @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size()), c=$(model_.channels()), p=$(params_size)]"
+                        backup_file(model_filename)
+                        model_.save(model_filename)
+
+                        # save optimizer
+                        opt_ = t._experiences.opt(id)
+                        opt_filename = t.optPath(id)
+                        @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)]"
+                        backup_file(opt_filename)
+                        save_optimizer(opt_filename, opt_)
+
+                        # save experiences
+                        exp_filename = t.expPath(id)
+                        @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))]"
+                        backup_file(exp_filename)
+                        t._experiences.save(id, exp_filename)
+
+                        # print separator
+                        @info repeat("-", 50)
 
                     else
 
