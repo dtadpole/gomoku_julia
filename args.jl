@@ -59,7 +59,7 @@ function parse_commandline()
         "--mcts_temperature"
         help = "mcts temperature"
         arg_type = Float32
-        default = Float32(1.4)
+        default = Float32(1.0)
 
         "--train_batch_size"
         help = "train batch size"
