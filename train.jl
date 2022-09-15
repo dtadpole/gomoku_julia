@@ -117,12 +117,144 @@ mutable struct Train
         @info repeat("=", 50)
         t._experiences.startServer()
 
+        """Parameters"""
+        BATCH_SIZE = args["train_batch_size"]
+        BATCH_NUM = args["train_batch_num"]
+        TRAIN_EPOCHS = args["train_epochs"]
+
+        """Train epoch"""
+        function train_epoch(id::Int, epoch::Int)
+
+            @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
+
+            if args["exp_sample_sequential"]
+                # re-sample each epoch
+                (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+            else
+                # re-sample each epoch
+                (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+            end
+
+            # keeps previous policy
+            prev_policy, _ = t._experiences.model(id).forward(states)
+
+            # keeps a list of kl divergence
+            kl_list = Vector{Float32}()
+
+            # keeps a list of loss
+            loss_list = Vector{Float32}()
+            pi_list = Vector{Float32}()
+            v_list = Vector{Float32}()
+            panelty_list = Vector{Float32}()
+
+            for batch in 1:BATCH_NUM
+
+                state = states[:, :, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+
+                # convert from visit count to distribution
+                pa = softmax(log.(pi .+ 1e-8), dims=1)
+
+                lossF = () -> t._experiences.model(id).loss(state, pa, v)[1]  # [IMPORTANT] use normalized distribution pa !!
+                params = t._experiences.model(id).params()
+                grads = gradient(lossF, params)
+
+                Flux.Optimise.update!(t._experiences.opt(id), params, grads)
+
+                if !args["exp_sample_sequential"]
+                    t._experiences.addTrainedCount(id, BATCH_SIZE)
+                end
+
+                # calculate new policy
+                new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
+
+                # keep track of loss
+                push!(loss_list, new_loss |> cpu)
+                push!(pi_list, loss_pi |> cpu)
+                push!(v_list, loss_v |> cpu)
+                push!(panelty_list, loss_panelty |> cpu)
+
+                # extract prev policy
+                prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+
+                # calculate KL divergence
+                kl = reshape(sum(prev_pi .* (log.(prev_pi) - log.(new_pi)), dims=1), BATCH_SIZE)
+                kl_mean = mean(kl)
+
+                # update global list
+                kl_list = vcat(kl_list, kl |> cpu)
+
+                # check if kl divergence is too high, break early if so
+                if kl_mean > 4 * args["train_kl_target"]
+                    @info "[$(id)] KL divergence [$(round(kl_mean, digits=4)) > 4 * $(args["train_kl_target"])] ... stopping early ."
+                    break
+                end
+
+            end
+
+            loss_epoch = round(mean(loss_list), digits=3)
+            pi_epoch = round(mean(pi_list), digits=3)
+            v_epoch = round(mean(v_list), digits=3)
+            panelty_epoch = round(mean(panelty_list), digits=3)
+
+            @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),π) + ($(v_epoch),v) + ($(panelty_epoch),H)]"
+            # @info loss_list pi_list v_list panelty_list
+
+            # check for kl divergence
+            kl_epoch_mean = mean(kl_list)
+
+            if kl_epoch_mean > args["train_kl_target"] * 2.0
+                new_learning_rate = max(t._experiences.opt(id)[1].eta / 1.5, args["learning_rate"] / args["learning_rate_range"])
+                @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=4))] ."
+                # update learning rate
+                t._experiences.opt(id)[1].eta = new_learning_rate
+            elseif kl_epoch_mean < args["train_kl_target"] / 2.0
+                new_learning_rate = min(t._experiences.opt(id)[1].eta * 1.5, args["learning_rate"] * args["learning_rate_range"])
+                @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=4))] ."
+                # update learning rate
+                t._experiences.opt(id)[1].eta = new_learning_rate
+            else
+                learning_rate = t._experiences.opt(id)[1].eta
+                @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(learning_rate, digits=4))] ."
+            end
+
+        end
+
+        """Save trained model, optimizer, and experiences"""
+        function save_trained(id::Int)
+
+            # print separator
+            @info repeat("-", 50)
+
+            # save model
+            model_ = t._experiences.model(id)
+            params_size = sum([length(l) for l in Flux.params(model_._model)])
+            model_filename = t.modelPath(id)
+            @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size()), c=$(model_.channels()), p=$(params_size)]"
+            backup_file(model_filename)
+            model_.save(model_filename)
+
+            # save optimizer
+            opt_ = t._experiences.opt(id)
+            opt_filename = t.optPath(id)
+            @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)]"
+            backup_file(opt_filename)
+            save_optimizer(opt_filename, opt_)
+
+            # save experiences
+            exp_filename = t.expPath(id)
+            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))]"
+            backup_file(exp_filename)
+            t._experiences.save(id, exp_filename)
+
+            # print separator
+            @info repeat("-", 50)
+
+        end
+
         """Train"""
         t.train = () -> begin
-
-            BATCH_SIZE = args["train_batch_size"]
-            BATCH_NUM = args["train_batch_num"]
-            TRAIN_EPOCHS = args["train_epochs"]
 
             while true
 
@@ -138,134 +270,21 @@ mutable struct Train
 
                             for epoch in 1:TRAIN_EPOCHS
 
-                                @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
-
-                                if args["exp_sample_sequential"]
-                                    # re-sample each epoch
-                                    (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
-                                else
-                                    # re-sample each epoch
-                                    (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
-                                end
-
-                                # keeps previous policy
-                                prev_policy, _ = t._experiences.model(id).forward(states)
-
-                                # keeps a list of kl divergence
-                                kl_list = Vector{Float32}()
-
-                                # keeps a list of loss
-                                loss_list = Vector{Float32}()
-                                pi_list = Vector{Float32}()
-                                v_list = Vector{Float32}()
-                                panelty_list = Vector{Float32}()
-
-                                for batch in 1:BATCH_NUM
-
-                                    state = states[:, :, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                                    pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                                    v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-
-                                    # convert from visit count to distribution
-                                    pa = softmax(log.(pi .+ 1e-8), dims=1)
-
-                                    lossF = () -> t._experiences.model(id).loss(state, pa, v)[1]  # [IMPORTANT] use normalized distribution pa !!
-                                    params = t._experiences.model(id).params()
-                                    grads = gradient(lossF, params)
-
-                                    Flux.Optimise.update!(t._experiences.opt(id), params, grads)
-
-                                    if !args["exp_sample_sequential"]
-                                        t._experiences.addTrainedCount(id, BATCH_SIZE)
+                                try
+                                    train_epoch(id, epoch)
+                                catch e
+                                    @error "Error" exception = (e, catch_backtrace())
+                                finally
+                                    # GC & reclaim CUDA memory
+                                    GC.gc(true)
+                                    if args["model_cuda"] >= 0
+                                        CUDA.reclaim()
                                     end
-
-                                    # calculate new policy
-                                    new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
-
-                                    # keep track of loss
-                                    push!(loss_list, new_loss |> cpu)
-                                    push!(pi_list, loss_pi |> cpu)
-                                    push!(v_list, loss_v |> cpu)
-                                    push!(panelty_list, loss_panelty |> cpu)
-
-                                    # extract prev policy
-                                    prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-
-                                    # calculate KL divergence
-                                    kl = reshape(sum(prev_pi .* (log.(prev_pi) - log.(new_pi)), dims=1), BATCH_SIZE)
-                                    kl_mean = mean(kl)
-
-                                    # update global list
-                                    kl_list = vcat(kl_list, kl |> cpu)
-
-                                    # check if kl divergence is too high, break early if so
-                                    if kl_mean > 4 * args["train_kl_target"]
-                                        @info "[$(id)] KL divergence [$(round(kl_mean, digits=4)) > 4 * $(args["train_kl_target"])] ... stopping early ."
-                                        break
-                                    end
-
-                                end
-
-                                loss_epoch = round(mean(loss_list), digits=3)
-                                pi_epoch = round(mean(pi_list), digits=3)
-                                v_epoch = round(mean(v_list), digits=3)
-                                panelty_epoch = round(mean(panelty_list), digits=3)
-
-                                @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),π) + ($(v_epoch),v) + ($(panelty_epoch),H)]"
-                                # @info loss_list pi_list v_list panelty_list
-
-                                # check for kl divergence
-                                kl_epoch_mean = mean(kl_list)
-
-                                if kl_epoch_mean > args["train_kl_target"] * 2.0
-                                    new_learning_rate = max(t._experiences.opt(id)[1].eta / 1.5, args["learning_rate"] / args["learning_rate_range"])
-                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) > $(args["train_kl_target"]) * 2.0] ... reducing learning rate to [$(round(new_learning_rate, digits=4))] ."
-                                    # update learning rate
-                                    t._experiences.opt(id)[1].eta = new_learning_rate
-                                elseif kl_epoch_mean < args["train_kl_target"] / 2.0
-                                    new_learning_rate = min(t._experiences.opt(id)[1].eta * 1.5, args["learning_rate"] * args["learning_rate_range"])
-                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) < $(args["train_kl_target"]) / 2.0] ... increasing learning rate to [$(round(new_learning_rate, digits=4))] ."
-                                    # update learning rate
-                                    t._experiences.opt(id)[1].eta = new_learning_rate
-                                else
-                                    learning_rate = t._experiences.opt(id)[1].eta
-                                    @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(learning_rate, digits=4))] ."
-                                end
-
-                                # GC & reclaim CUDA memory
-                                GC.gc(true)
-                                if args["model_cuda"] >= 0
-                                    CUDA.reclaim()
                                 end
 
                             end
 
-                            # print separator
-                            @info repeat("-", 50)
-
-                            # save model
-                            model_ = t._experiences.model(id)
-                            params_size = sum([length(l) for l in Flux.params(model_._model)])
-                            model_filename = t.modelPath(id)
-                            @info "[$(id)] Save model [$(model_filename)] : [$(model_.size())x$(model_.size()), c=$(model_.channels()), p=$(params_size)]"
-                            backup_file(model_filename)
-                            model_.save(model_filename)
-
-                            # save optimizer
-                            opt_ = t._experiences.opt(id)
-                            opt_filename = t.optPath(id)
-                            @info "[$(id)] Save optimizer [$(opt_filename)] : [η=$(round(opt_[1].eta, digits=4)), β=$(round.(opt_[1].beta, digits=4)), δ=$(opt_[2].wd)]"
-                            backup_file(opt_filename)
-                            save_optimizer(opt_filename, opt_)
-
-                            # save experiences
-                            exp_filename = t.expPath(id)
-                            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))]"
-                            backup_file(exp_filename)
-                            t._experiences.save(id, exp_filename)
-
-                            # print separator
-                            @info repeat("-", 50)
+                            save_trained(id)
 
                         catch e
 
