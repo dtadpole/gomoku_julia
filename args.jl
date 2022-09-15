@@ -49,7 +49,7 @@ function parse_commandline()
         "--mcts_depth"
         help = "mcts depth"
         arg_type = Int
-        default = 12
+        default = 10
 
         "--mcts_gamma"
         help = "mcts gamma"
