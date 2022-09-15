@@ -119,7 +119,7 @@ function parse_commandline()
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
         arg_type = Float32
-        default = Float32(0.5)
+        default = Float32(0.4)
 
         "--exp_sample_sequential"
         help = "experience sample sequentially"
