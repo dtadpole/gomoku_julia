@@ -209,7 +209,7 @@ function eval_run(eval_id::Int)
 
     @info repeat("=", 50)
     @info "[$(eval_id)] [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
-    if args["player_1"] == "curr" && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
+    if (args["player_1"] == "curr" || args["player_1"] == "server") && args["player_2"] == "best" && (player_1_wins - player_2_wins) >= args["eval_playouts"] / 2
         @info repeat("-", 50)
         @info "[$(eval_id)] Replacing best model with current model ..."
         best_filename = modelPath(eval_id; tag="best")
