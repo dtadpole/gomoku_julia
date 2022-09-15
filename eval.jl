@@ -120,7 +120,7 @@ function player_function(player::String; eval_id=1)
         testmode!(model)
         return (game) -> model_step(game, model), model
 
-    elseif player == "download"
+    elseif player == "server"
 
         id, model = download_model(eval_id)
         testmode!(model)
