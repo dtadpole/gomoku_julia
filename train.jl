@@ -163,7 +163,7 @@ mutable struct Train
                 Flux.Optimise.update!(t._experiences.opt(id), params, grads)
 
                 if !args["exp_sample_sequential"]
-                    t._experiences.addTrainedCount(id, BATCH_SIZE)
+                    t._experiences.addTrainedCount(id, 1)
                 end
 
                 # calculate new policy
@@ -262,7 +262,7 @@ mutable struct Train
 
                     # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
-                    if t._experiences.trainedCount(id) + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount(id) * TRAIN_EPOCHS
+                    if (t._experiences.trainedCount(id) + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
                         try
                             # print separator
@@ -294,7 +294,7 @@ mutable struct Train
 
                             if args["exp_sample_sequential"]
                                 # always add BATCH_SIZE * BATCH_NUM to trainedCount
-                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS)
+                                t._experiences.addTrainedCount(id, BATCH_NUM * TRAIN_EPOCHS)
                                 t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
                             end
 
