@@ -12,7 +12,7 @@ function infer_playouts()
 
         try
 
-            id_1, id_2 = sample(1:args["family_size"], 2, replace=args["family_allow_self_play"])
+            id_1, id_2 = sample(1:args["population_size"], 2, replace=args["population_allow_self_play"])
 
             @info repeat("-", 50)
             @info "Inference Iteration [$(i)] ..."

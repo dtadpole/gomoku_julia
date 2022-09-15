@@ -224,7 +224,7 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     # eval_id ∈ [1, 2, 3, ...]
-    for eval_id in 1:args["family_size"]
+    for eval_id in 1:args["population_size"]
         eval_run(eval_id)
     end
 end

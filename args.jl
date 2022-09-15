@@ -158,14 +158,14 @@ function parse_commandline()
         range_tester = (x -> x ∈ ["server", "curr", "best", "human"])
         default = "best"
 
-        "--family_size"
-        help = "family size"
+        "--population_size"
+        help = "population size"
         arg_type = Int
         range_tester = (x -> x >= 1)
         default = 1
 
-        "--family_allow_self_play"
-        help = "family allow self play"
+        "--population_allow_self_play"
+        help = "population allow self play"
         arg_type = Bool
         default = true
 

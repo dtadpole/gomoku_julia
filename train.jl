@@ -328,6 +328,6 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     @info repeat("=", 50)
     # train model[1] and model[2]
-    train = Train([id for id in 1:args["family_size"]])
+    train = Train([id for id in 1:args["population_size"]])
     train.train()
 end
