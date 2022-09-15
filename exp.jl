@@ -176,6 +176,7 @@ mutable struct Experiences
         """Trim experiences"""
         e.trimExperience = (id, sample_size::Int) -> begin
             # remove sampled experiences
+            @info "[$(id)] Trimming experience [$(length(e._exp_list[id])) -> $(length(e._exp_list[id])-sample_size)]"
             e._exp_list[id] = e._exp_list[id][sample_size+1:end]
         end
 
