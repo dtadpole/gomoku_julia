@@ -29,7 +29,7 @@ function parse_commandline()
         "--model_loss_coef_entropy"
         help = "model loss entropy coefficient"
         arg_type = Float32
-        default = Float32(0.4)
+        default = Float32(0.5)
 
         "--model_loss_theta_entropy"
         help = "model loss theta coefficient"
@@ -49,7 +49,7 @@ function parse_commandline()
         "--mcts_depth"
         help = "mcts depth"
         arg_type = Int
-        default = 12
+        default = 16
 
         "--mcts_gamma"
         help = "mcts gamma"
@@ -119,7 +119,7 @@ function parse_commandline()
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
         arg_type = Float32
-        default = Float32(0.4)
+        default = Float32(0.5)
 
         "--exp_sample_sequential"
         help = "experience sample sequentially"
