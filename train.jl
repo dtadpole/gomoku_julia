@@ -139,7 +139,7 @@ mutable struct Train
                             for epoch in 1:TRAIN_EPOCHS
 
                                 if args["exp_sample_sequential"]
-                                    # sample once for all epoches when sample sequentially
+                                    # re-sample each epoch
                                     (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
                                 else
                                     # re-sample each epoch
