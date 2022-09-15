@@ -44,7 +44,7 @@ function parse_commandline()
         "--mcts_cpuct"
         help = "mcts cpuct"
         arg_type = Float32
-        default = Float32(10.0)
+        default = Float32(5.0)
 
         "--mcts_depth"
         help = "mcts depth"
@@ -59,7 +59,7 @@ function parse_commandline()
         "--mcts_temperature"
         help = "mcts temperature"
         arg_type = Float32
-        default = Float32(1.0)
+        default = Float32(1.4)
 
         "--train_batch_size"
         help = "train batch size"
@@ -69,7 +69,7 @@ function parse_commandline()
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 8 # 1, 2, 4, 8, 16, 32, 64
+        default = 4 # 1, 2, 4, 8, 16, 32, 64
 
         "--train_epochs"
         help = "train epochs"
