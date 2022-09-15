@@ -89,7 +89,7 @@ function parse_commandline()
         "--learning_rate_range"
         help = "learning rate range"
         arg_type = Float32
-        default = Float32(5.0)
+        default = Float32(10.0)
 
         "--adamw_beta1"
         help = "adamw beta1"
