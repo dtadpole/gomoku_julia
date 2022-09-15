@@ -1,5 +1,56 @@
 include("./model.jl")
 
+function rotate90(a::Matrix)
+    reverse(transpose(a), dims=2)
+end
+
+function rotate180(a::Matrix)
+    reverse(reverse(a, dims=2), dims=1)
+end
+
+function rotate270(a::Matrix)
+    reverse(transpose(a), dims=1)
+end
+
+function flip(a::Matrix; dims=2)
+    reverse(a, dims=dims)
+end
+
+function random_transform(a::Matrix)
+    r = rand(1:8)
+    if mod(r, 4) == 1
+        data = a
+    elseif mod(r, 4) == 2
+        data = rotate90(a)
+    elseif mod(r, 4) == 3
+        data = rotate180(a)
+    else
+        data = rotate270(a)
+    end
+    if r > 4
+        data = flip(data)
+    end
+    return data, r
+end
+
+function revert_transform(a::Matrix, r::Int)
+    if r > 4
+        data = flip(a)
+    else
+        data = a
+    end
+    if mod(r, 4) == 1
+        return data
+    elseif mod(r, 4) == 2
+        return rotate270(data)
+    elseif mod(r, 4) == 3
+        return rotate180(data)
+    else
+        return rotate90(data)
+    end
+end
+
+
 mutable struct MctsNode
 
     # attributes
@@ -49,11 +100,13 @@ mutable struct MctsNode
         function _calc_Pi_V()
             if node._Pi_V === nothing
                 state = node._game.state()
+                state, r = random_transform(state) # random transform
                 if args["model_cuda"] >= 0
                     state = state |> gpu
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
-                node._Pi_V = (reshape(Array(pi), node.size()^2), Array(v)[1])
+                pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
+                node._Pi_V = (reshape(pi, node.size()^2), Array(v)[1])
             end
             return node._Pi_V
         end

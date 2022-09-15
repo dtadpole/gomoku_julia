@@ -3,22 +3,6 @@ include("./mcts.jl")
 using HTTP
 using Random
 
-rotate90 = (a::Matrix) -> begin
-    reverse(transpose(a), dims=2)
-end
-
-rotate180 = (a::Matrix) -> begin
-    reverse(reverse(a, dims=2), dims=1)
-end
-
-rotate270 = (a::Matrix) -> begin
-    reverse(transpose(a), dims=1)
-end
-
-flip = (a::Matrix; dims = 2) -> begin
-    reverse(a, dims=dims)
-end
-
 const _WEIGHTS = 1:floor(Int, args["exp_max"] * 2)
 
 function model_filename(id::Int)
