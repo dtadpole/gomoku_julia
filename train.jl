@@ -198,7 +198,7 @@ mutable struct Train
             v_epoch = round(mean(v_list), digits=3)
             panelty_epoch = round(mean(panelty_list), digits=3)
 
-            @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = ($(pi_epoch),π) + ($(v_epoch),v) + ($(panelty_epoch),H)]"
+            @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = $(pi_epoch),π + $(v_epoch),v - $(args["model_loss_coef_entropy"]) * $(panelty_epoch),H]"
             # @info loss_list pi_list v_list panelty_list
 
             # check for kl divergence
