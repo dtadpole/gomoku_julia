@@ -124,7 +124,7 @@ function parse_commandline()
         "--exp_sample_sequential"
         help = "experience sample sequentially"
         arg_type = Bool
-        default = true
+        default = false
 
         "--exp_server"
         help = "experience server"
