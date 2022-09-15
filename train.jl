@@ -232,6 +232,12 @@ mutable struct Train
                                     @info "[$(id)] KL divergence [$(round(kl_epoch_mean, digits=4)) within range] ... keeping learning rate as [$(round(learning_rate, digits=4))] ."
                                 end
 
+                                # GC & reclaim CUDA memory
+                                GC.gc(true)
+                                if args["model_cuda"] >= 0
+                                    CUDA.reclaim()
+                                end
+
                             end
 
                             # print separator
@@ -287,8 +293,6 @@ mutable struct Train
                 GC.gc(true)
                 if args["model_cuda"] >= 0
                     CUDA.reclaim()
-                    # CUDA.memory_status()
-                    # println()
                 end
 
                 sleep(30)
