@@ -126,27 +126,22 @@ mutable struct Train
 
             while true
 
-                try
+                for id in id_list
 
-                    for id in id_list
+                    # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
-                        # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
+                    if t._experiences.trainedCount(id) + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
-                        if t._experiences.trainedCount(id) + BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS < t._experiences.totalCount(id) * TRAIN_EPOCHS
-
+                        try
                             # print separator
                             @info repeat("-", 50)
 
-                            if args["exp_sample_sequential"]
-                                # sample once for all epoches when sample sequentially
-                                (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
-                                # always add BATCH_SIZE * BATCH_NUM to trainedCount
-                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS)
-                            end
-
                             for epoch in 1:TRAIN_EPOCHS
 
-                                if !args["exp_sample_sequential"]
+                                if args["exp_sample_sequential"]
+                                    # sample once for all epoches when sample sequentially
+                                    (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
+                                else
                                     # re-sample each epoch
                                     (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
                                 end
@@ -266,31 +261,37 @@ mutable struct Train
                             # print separator
                             @info repeat("-", 50)
 
-                        else
+                        catch e
 
-                            @info "[$(id)] Training is waiting for more experiences [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
+                            @error "Error" exception = (e, catch_backtrace())
+
+                        finally
+
+                            if args["exp_sample_sequential"]
+                                # always add BATCH_SIZE * BATCH_NUM to trainedCount
+                                t._experiences.addTrainedCount(id, BATCH_SIZE * BATCH_NUM * TRAIN_EPOCHS)
+                                t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
+                            end
 
                         end
 
+                    else
+
+                        @info "[$(id)] Training is waiting for more experiences [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
+
                     end
-
-                catch e
-
-                    @error "Error" exception = (e, catch_backtrace())
-
-                finally
-
-                    # GC & reclaim CUDA memory
-                    GC.gc(true)
-                    if args["model_cuda"] >= 0
-                        CUDA.reclaim()
-                        # CUDA.memory_status()
-                        # println()
-                    end
-
-                    sleep(30)
 
                 end
+
+                # GC & reclaim CUDA memory
+                GC.gc(true)
+                if args["model_cuda"] >= 0
+                    CUDA.reclaim()
+                    # CUDA.memory_status()
+                    # println()
+                end
+
+                sleep(30)
 
             end
 

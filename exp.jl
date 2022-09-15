@@ -1,6 +1,7 @@
 include("./mcts.jl")
 
 using HTTP
+using Random
 
 rotate90 = (a::Matrix) -> begin
     reverse(transpose(a), dims=2)
@@ -43,6 +44,7 @@ mutable struct Experiences
     playGame::Function
     addExperience::Function
     sampleExperience::Function
+    trimExperience::Function
     startServer::Function
     save::Function
     load::Function
@@ -142,7 +144,7 @@ mutable struct Experiences
         e.sampleExperience = (id, sample_size::Int) -> begin
             if args["exp_sample_sequential"]
                 # sample sequentially
-                s, pi, v = unzip(e._exp_list[id][1:sample_size])
+                s, pi, v = unzip(shuffle(e._exp_list[id][1:sample_size]))
                 # reshape to tensor
                 s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
                 pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
@@ -153,7 +155,7 @@ mutable struct Experiences
                     v = v |> gpu
                 end
                 # remove sampled experiences
-                e._exp_list[id] = e._exp_list[id][sample_size+1:end]
+                # e._exp_list[id] = e._exp_list[id][sample_size+1:end]
                 return s, pi, v
             else
                 # sample randomly
@@ -169,6 +171,12 @@ mutable struct Experiences
                 end
                 return s, pi, v
             end
+        end
+
+        """Trim experiences"""
+        e.trimExperience = (id, sample_size::Int) -> begin
+            # remove sampled experiences
+            e._exp_list[id] = e._exp_list[id][sample_size+1:end]
         end
 
         """Start server"""
