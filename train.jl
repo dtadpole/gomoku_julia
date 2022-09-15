@@ -109,7 +109,7 @@ mutable struct Train
                 @info repeat("-", 50)
                 @info "[$(id)] Loading Experiences from [$(exp_filename)] ..."
                 t._experiences.load(id, exp_filename)
-                @info "[$(id)] Loaded Experiences [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedCount(id))]"
+                @info "[$(id)] Loaded Experiences [len=$(t._experiences.length(id)), total=$(t._experiences.totalCount(id)), trained=$(t._experiences.trainedBatch(id))]"
             end
         end
 
@@ -125,7 +125,7 @@ mutable struct Train
         """Train epoch"""
         function train_epoch(id::Int, epoch::Int)
 
-            @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
+            @info "[$(id)] Training epoch [$(epoch)] started [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedBatch(id))] ..."
 
             if args["exp_sample_sequential"]
                 # re-sample each epoch
@@ -163,7 +163,7 @@ mutable struct Train
                 Flux.Optimise.update!(t._experiences.opt(id), params, grads)
 
                 if !args["exp_sample_sequential"]
-                    t._experiences.addTrainedCount(id, 1)
+                    t._experiences.addtrainedBatch(id, 1)
                 end
 
                 # calculate new policy
@@ -244,7 +244,7 @@ mutable struct Train
 
             # save experiences
             exp_filename = t.expPath(id)
-            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))]"
+            @info "[$(id)] Save experiences [$(exp_filename)] : [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedBatch(id))]"
             backup_file(exp_filename)
             t._experiences.save(id, exp_filename)
 
@@ -262,7 +262,7 @@ mutable struct Train
 
                     # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
-                    if (t._experiences.trainedCount(id) + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
+                    if (t._experiences.trainedBatch(id) + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
                         try
                             # print separator
@@ -293,8 +293,8 @@ mutable struct Train
                         finally
 
                             if args["exp_sample_sequential"]
-                                # always add BATCH_SIZE * BATCH_NUM to trainedCount
-                                t._experiences.addTrainedCount(id, BATCH_NUM * TRAIN_EPOCHS)
+                                # always add BATCH_SIZE * BATCH_NUM to trainedBatch
+                                t._experiences.addtrainedBatch(id, BATCH_NUM * TRAIN_EPOCHS)
                                 t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
                             end
 
@@ -302,7 +302,7 @@ mutable struct Train
 
                     else
 
-                        @info "[$(id)] Training is waiting for more experiences [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedCount(id))] ..."
+                        @info "[$(id)] Training is waiting for more experiences [len=$(t._experiences.length(id)), tot=$(t._experiences.totalCount(id)), trn=$(t._experiences.trainedBatch(id))] ..."
 
                     end
 

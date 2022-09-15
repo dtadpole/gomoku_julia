@@ -33,14 +33,14 @@ mutable struct Experiences
     _opt_list::Vector{Flux.Optimise.Optimiser}
     _exp_list::Vector{Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}}
     _total_count::Vector{Int}
-    _trained_count::Vector{Int}
+    _trained_batches::Vector{Int}
 
     # functions
     size::Function
     length::Function
     totalCount::Function
-    trainedCount::Function
-    addTrainedCount::Function
+    trainedBatch::Function
+    addtrainedBatch::Function
     playGame::Function
     addExperience::Function
     sampleExperience::Function
@@ -70,7 +70,7 @@ mutable struct Experiences
             push!(e._exp_list, Vector{Tuple{Matrix{Float32},Matrix{Float32},Float32}}())
         end
         e._total_count = zeros(Int, length(models))
-        e._trained_count = zeros(Int, length(models))
+        e._trained_batches = zeros(Int, length(models))
 
         """Size"""
         e.size = () -> e._model_list[1].size()
@@ -82,11 +82,11 @@ mutable struct Experiences
         e.totalCount = (id) -> e._total_count[id]
 
         """Trained count"""
-        e.trainedCount = (id) -> e._trained_count[id]
+        e.trainedBatch = (id) -> e._trained_batches[id]
 
         """Add to trained count"""
-        e.addTrainedCount = (id, count) -> begin
-            e._trained_count[id] += count
+        e.addtrainedBatch = (id, count) -> begin
+            e._trained_batches[id] += count
         end
 
         """Play game"""
@@ -222,16 +222,16 @@ mutable struct Experiences
         """Save"""
         e.save = (id, path) -> begin
             io = open(path, "w")
-            serialize(io, (e._total_count[id], e._trained_count[id], e._exp_list[id]))
+            serialize(io, (e._total_count[id], e._trained_batches[id], e._exp_list[id]))
             close(io)
         end
 
         """Load"""
         e.load = (id, path) -> begin
             io = open(path, "r")
-            total_count, trained_count, exp_list = deserialize(io)
+            total_count, trained_batches, exp_list = deserialize(io)
             e._total_count[id] = total_count
-            e._trained_count[id] = trained_count
+            e._trained_batches[id] = trained_batches
             e._exp_list[id] = exp_list
             close(io)
         end
