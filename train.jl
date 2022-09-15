@@ -145,7 +145,7 @@ mutable struct Train
             loss_list = Vector{Float32}()
             pi_list = Vector{Float32}()
             v_list = Vector{Float32}()
-            panelty_list = Vector{Float32}()
+            entropy_list = Vector{Float32}()
 
             for batch in 1:BATCH_NUM
 
@@ -167,13 +167,13 @@ mutable struct Train
                 end
 
                 # calculate new policy
-                new_loss, loss_pi, loss_v, loss_panelty, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
+                new_loss, loss_pi, loss_v, loss_entropy, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
 
                 # keep track of loss
                 push!(loss_list, new_loss |> cpu)
                 push!(pi_list, loss_pi |> cpu)
                 push!(v_list, loss_v |> cpu)
-                push!(panelty_list, loss_panelty |> cpu)
+                push!(entropy_list, loss_entropy |> cpu)
 
                 # extract prev policy
                 prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
@@ -194,12 +194,11 @@ mutable struct Train
             end
 
             loss_epoch = round(mean(loss_list), digits=3)
-            pi_epoch = round(mean(pi_list), digits=3)
+            pi_epoch = round(mean(pi_list), digits=2)
             v_epoch = round(mean(v_list), digits=3)
-            panelty_epoch = round(mean(panelty_list), digits=3)
+            entropy_epoch = round(mean(entropy_list), digits=2)
 
-            @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = $(pi_epoch),π + $(v_epoch),v - $(args["model_loss_coef_entropy"]) * $(panelty_epoch),H]"
-            # @info loss_list pi_list v_list panelty_list
+            @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = $(pi_epoch),π + $(v_epoch),v - $(args["model_loss_coef_entropy"]) * $(entropy_epoch),H]"
 
             # check for kl divergence
             kl_epoch_mean = mean(kl_list)
