@@ -150,7 +150,7 @@ function parse_commandline()
         help = "player 1"
         arg_type = String
         range_tester = (x -> x ∈ ["server", "curr", "best", "human"])
-        default = "download"
+        default = "server"
 
         "--player_2"
         help = "player 2"
