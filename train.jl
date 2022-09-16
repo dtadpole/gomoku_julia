@@ -268,7 +268,7 @@ mutable struct Train
                     if (t._experiences.trainedBatch(id) + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
                         sleep_count_ema = 0.9 * sleep_count_ema + 0.1 * sleep_count
-                        sleep_time = max(1.0, min(60.0, sleep_time * 3.0 / (sleep_count_ema + 1.0)))
+                        sleep_time = max(1.0, min(60.0, (sleep_time * sleep_count_ema) / 2.0))
 
                         sleep_count = 0
 
