@@ -202,7 +202,7 @@ function eval_run(eval_id::Int)
             sleep(1.4^(i - 1))
         finally
             @info repeat("-", 50)
-            @info "[$(eval_id)] Evaluation Tally [$(i)] : [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
+            @info "[$(eval_id)] Tally [$(i)] : [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
             sleep(1)
         end
     end
