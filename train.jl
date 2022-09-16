@@ -292,8 +292,6 @@ mutable struct Train
 
                             end
 
-                            save_trained(id)
-
                         catch e
 
                             @error "Error" exception = (e, catch_backtrace())
@@ -305,6 +303,9 @@ mutable struct Train
                                 t._experiences.addtrainedBatch(id, BATCH_NUM * TRAIN_EPOCHS)
                                 t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
                             end
+
+                            # save trained model, optimizer, and experiences
+                            save_trained(id)
 
                         end
 
