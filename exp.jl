@@ -196,6 +196,13 @@ mutable struct Experiences
                 return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
             end)
 
+            # game size
+            HTTP.register!(router, "GET", "/game/size", (req) -> begin
+                io = IOBuffer()
+                serialize(io, e.size())
+                return HTTP.Response(200, Dict("Content-Type" => "application/octet-stream"), body=io.data)
+            end)
+
             # start server async
             @async HTTP.serve(router, "0.0.0.0", args["exp_port"])
             @info "Experience server started on port [$(args["exp_port"])]"
