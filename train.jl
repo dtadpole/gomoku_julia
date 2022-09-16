@@ -283,6 +283,10 @@ mutable struct Train
                                 catch e
                                     @error "Error" exception = (e, catch_backtrace())
                                 finally
+                                    if args["exp_sample_sequential"]
+                                        # always add BATCH_NUM to trainedBatch
+                                        t._experiences.addtrainedBatch(id, BATCH_NUM)
+                                    end
                                     # GC & reclaim CUDA memory
                                     GC.gc(true)
                                     if args["model_cuda"] >= 0
@@ -299,8 +303,7 @@ mutable struct Train
                         finally
 
                             if args["exp_sample_sequential"]
-                                # always add BATCH_SIZE * BATCH_NUM to trainedBatch
-                                t._experiences.addtrainedBatch(id, BATCH_NUM * TRAIN_EPOCHS)
+                                # trip experiences by BATCH_SIZE * BATCH_NUM
                                 t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
                             end
 
