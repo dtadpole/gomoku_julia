@@ -255,6 +255,10 @@ mutable struct Train
         """Train"""
         t.train = () -> begin
 
+            sleep_time = 15.0 # initialize to 15 seconds
+            sleep_count = 0
+            sleep_count_ema = 2.0 # initialize to target of 2.0
+
             while true
 
                 for id in id_list
@@ -262,6 +266,11 @@ mutable struct Train
                     # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
                     if (t._experiences.trainedBatch(id) + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
+
+                        sleep_count_ema = 0.8 * sleep_count_ema + 0.2 * sleep_count
+                        sleep_time = max(1.0, min(60.0, sleep_time * 3.0 / (sleep_count_ema + 1.0)))
+
+                        sleep_count = 0
 
                         try
                             # print separator
@@ -313,7 +322,9 @@ mutable struct Train
                     CUDA.reclaim()
                 end
 
-                sleep(15)
+                sleep_count += 1
+
+                sleep(sleep_time)
 
             end
 
