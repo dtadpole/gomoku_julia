@@ -41,7 +41,6 @@ function infer_playouts()
         catch e
 
             @error "Error" exception = (e, catch_backtrace())
-            sleep(1.1^(i - 1))
 
         finally
 
