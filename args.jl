@@ -64,12 +64,12 @@ function parse_commandline()
         "--train_batch_size"
         help = "train batch size"
         arg_type = Int
-        default = 512 # 256, 1_024, 4_096, 16_384
+        default = 1024 # 256, 1_024, 4_096, 16_384
 
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 16 # 1, 2, 4, 8, 16, 32, 64
+        default = 8 # 1, 2, 4, 8, 16, 32, 64
 
         "--train_epochs"
         help = "train epochs"
