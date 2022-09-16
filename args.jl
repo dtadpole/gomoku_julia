@@ -69,7 +69,7 @@ function parse_commandline()
         "--train_batch_num"
         help = "train batch number"
         arg_type = Int
-        default = 4 # 1, 2, 4, 8, 16, 32, 64
+        default = 8 # 1, 2, 4, 8, 16, 32, 64
 
         "--train_epochs"
         help = "train epochs"
@@ -114,7 +114,7 @@ function parse_commandline()
         "--exp_max"
         help = "experience max"
         arg_type = Int
-        default = 200_000
+        default = 100_000
 
         "--exp_preserve_ratio"
         help = "experience preserve ratio"
@@ -124,7 +124,7 @@ function parse_commandline()
         "--exp_sample_sequential"
         help = "experience sample sequentially"
         arg_type = Bool
-        default = false
+        default = true
 
         "--exp_server"
         help = "experience server"
@@ -144,7 +144,7 @@ function parse_commandline()
         "--eval_playouts"
         help = "eval playout count"
         arg_type = Int
-        default = 12
+        default = 16
 
         "--player_1"
         help = "player 1"
