@@ -36,10 +36,10 @@ function parse_commandline()
         arg_type = Float32
         default = Float32(0.001)
 
-        "--mcts_n"
-        help = "mcts play count"
+        "--mcts_n_multiplier"
+        help = "mcts play count multiplier"
         arg_type = Int
-        default = 400
+        default = 2
 
         "--mcts_cpuct"
         help = "mcts cpuct"

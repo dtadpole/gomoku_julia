@@ -26,7 +26,7 @@ function model_step(game::Game, model::Model)
 
     # mcts play
     prior_N = node._N
-    while node._N < args["mcts_n"]
+    while node._N < game.size()^2 * args["mcts_n_multiplier"]
         node.travelBranch(args["mcts_depth"])
     end
     post_N = node._N

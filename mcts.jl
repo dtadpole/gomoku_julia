@@ -129,7 +129,7 @@ mutable struct MctsNode
         end
 
         """Node Value : Q(S,a) + cpuct * P(S,a) * sqrt(sum(N(S,x) for x in siblings)) / (1 + N(S,a))"""
-        node.nodeValue = () -> node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
+        node.nodeValue = () -> sign(node._game.turn()) * node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
 
         """Update branch"""
         node.updateBranch = (v::Float32) -> begin
@@ -143,7 +143,7 @@ mutable struct MctsNode
         """Travel branch"""
         node.travelBranch = (depth::Int = 1_000) -> begin
             if node._game.is_over()
-                node.updateBranch(-node._game.score() * sign(node._game.turn()))
+                node.updateBranch(-node._game.score())
             elseif depth <= 0
                 _, v = _calc_Pi_V()
                 node.updateBranch(v)
@@ -225,7 +225,7 @@ function mcts_play_game(model_1::Model, model_2::Model)
 
         # play
         prior_N = node._N
-        while node._N < args["mcts_n"]
+        while node._N < game.size()^2 * args["mcts_n_multiplier"]
             node.travelBranch(args["mcts_depth"])
         end
         post_N = node._N
@@ -246,6 +246,7 @@ function mcts_play_game(model_1::Model, model_2::Model)
             action = argmax(pa)
         end
 
+        game = game.clone()
         game.play_action(action)
         if args["game_display"]
             duration = round(time() - start_time, digits=1)
