@@ -313,7 +313,7 @@ mutable struct Train
                     CUDA.reclaim()
                 end
 
-                sleep(30)
+                sleep(15)
 
             end
 
