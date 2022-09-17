@@ -48,7 +48,7 @@ function model_step(game::Game, model::Model)
     if args["game_display"]
         duration = round(time() - start_time, digits=1)
         # @info "$(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(reshape(node.rootN(), SIZE^2), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s] "
-        @info "[$(round(node.rootQ(), digits=3))] $(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(reshape(node.rootN(), SIZE^2), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s] "
+        @info "[$(round(node.rootQ(), digits=2))] $(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(reshape(node.rootN(), SIZE^2), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s] "
         # display
         game.display()
     end
