@@ -32,13 +32,14 @@ function model_step(game::Game, model::Model)
     post_N = node._N
 
     # policy distribution
-    pa = reshape(node.rootN(), (model.size() * model.size()))
+    pi = node.rootN
     if TEMPERATURE > 1e-4
-        pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
-        action = sample(1:model.size()^2, StatsBase.ProbabilityWeights(pa))
+        pa = reshape(pi, (model.size() * model.size()))
+        pa = softmax(log.(pa) / TEMPERATURE)
+        action = sample(1:model.size()^2, ProbabilityWeights(pa))
+        action = CartesianIndex(mod(action - 1, SIZE) + 1, div(action - 1, SIZE) + 1)
     else
-        pa = pa .* game.available_actions()
-        action = argmax(pa)
+        action = argmax(pi)
     end
 
     # play action
@@ -78,7 +79,9 @@ function human_step(game::Game)
             continue
         end
         if move[1] in ('A':'Z')
-            action = (parse(Int, move[2:end]) - 1) * game.size() + (move[1] - 'A') + 1
+            x = parse(Int, move[2:end])
+            y = (move[1] - 'A') + 1
+            action = CartesianIndex(x, y)
         else
             continue
         end

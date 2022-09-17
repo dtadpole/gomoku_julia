@@ -107,6 +107,7 @@ mutable struct Model
                     x -> reshape(x, (div(channels, 2) * size * size, :)),
                     Dropout(0.5),
                     Dense(div(channels, 2) * size * size => size * size, elu),
+                    x -> reshape(x, (size, size, :)),
                     # x -> log.(x + 1e-8), # add log layer
                     # softmax # softmax layer applies to only dims=1
                 ),
@@ -129,10 +130,8 @@ mutable struct Model
         """Forward pass"""
         m.forward = (x) -> begin
             p, v = m._model(x)
-            # [IMPORTANT] policy head add log layer before softmax - improves gradient back propagation !!
-            # return softmax(log.(p .+ 1e-8), dims=1), v
-            return softmax(p, dims=1), v
-            # return p, v
+            pi = softmax(p, dims=[1, 2]) .* (1.0 .- abs.(sign.(x))) # mask out illegal moves
+            return pi, v
         end
 
         """returns (loss, p_, v_)"""
@@ -140,8 +139,8 @@ mutable struct Model
             # model forward
             p_, v_ = m.forward(x)
             # panelty() = args["model_loss_theta_entropy"] * sum(x -> sum(x -> x .* x, x), Flux.params(m._model))
-            entropy() = -sum(p_ .* log.(p_), dims=1)
-            loss_pi = mean(-sum(pi .* log.(p_), dims=1))
+            entropy() = -sum(p_ .* log.(p_), dims=[1, 2])
+            loss_pi = mean(-sum(pi .* log.(p_), dims=[1, 2]))
             loss_v = mean((v .- v_) .^ 2)
             loss_entropy = mean(entropy())
             loss = loss_pi + loss_v - (args["model_loss_coef_entropy"] * loss_entropy) # calculate loss for each sample in the batch
@@ -199,6 +198,7 @@ function _play_model(model::Model)
         available_actions = game.available_actions()
         distribution = reshape(Array(pi), model.size()^2) .* available_actions
         action = sample(1:model.size()^2, ProbabilityWeights(distribution))
+        action = CartesianIndex(mod(action - 1, model.size()) + 1, div(action - 1, model.size()) + 1)
         # play action
         game.play_action(action)
         if args["game_display"]

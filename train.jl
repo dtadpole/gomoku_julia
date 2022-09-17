@@ -143,9 +143,9 @@ mutable struct Train
 
             # keeps a list of loss
             loss_list = Vector{Float32}()
-            pi_list = Vector{Float32}()
-            v_list = Vector{Float32}()
-            entropy_list = Vector{Float32}()
+            loss_pi_list = Vector{Float32}()
+            loss_v_list = Vector{Float32}()
+            loss_entropy_list = Vector{Float32}()
 
             for batch in 1:BATCH_NUM
 
@@ -160,7 +160,7 @@ mutable struct Train
                 end
 
                 # convert from visit count to distribution
-                pa = softmax(log.(pi .+ 1e-8), dims=1)
+                pa = softmax(log.(pi .+ 1e-8), dims=[1, 2])
 
                 lossF = () -> t._experiences.model(id).loss(state, pa, v)[1]  # [IMPORTANT] use normalized distribution pa !!
                 params = t._experiences.model(id).params()
@@ -177,9 +177,9 @@ mutable struct Train
 
                 # keep track of loss
                 push!(loss_list, new_loss |> cpu)
-                push!(pi_list, loss_pi |> cpu)
-                push!(v_list, loss_v |> cpu)
-                push!(entropy_list, loss_entropy |> cpu)
+                push!(loss_pi_list, loss_pi |> cpu)
+                push!(loss_v_list, loss_v |> cpu)
+                push!(loss_entropy_list, loss_entropy |> cpu)
 
                 # extract prev policy
                 prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
@@ -200,9 +200,9 @@ mutable struct Train
             end
 
             loss_epoch = round(mean(loss_list), digits=3)
-            pi_epoch = round(mean(pi_list), digits=2)
-            v_epoch = round(mean(v_list), digits=3)
-            entropy_epoch = round(mean(entropy_list), digits=2)
+            pi_epoch = round(mean(loss_pi_list), digits=2)
+            v_epoch = round(mean(loss_v_list), digits=3)
+            entropy_epoch = round(mean(loss_entropy_list), digits=2)
 
             @info "[$(id)] Training epoch [$(epoch)] updated [loss : $(loss_epoch) = $(pi_epoch),π + $(v_epoch),v - $(args["model_loss_coef_entropy"]) * $(entropy_epoch),H]"
 

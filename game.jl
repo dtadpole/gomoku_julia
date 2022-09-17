@@ -72,15 +72,16 @@ mutable struct Game
         end
 
         """Play an action"""
-        g.play_action = (action::Int) -> begin
-            x = div(action - 1, g._size) + 1
-            y = mod(action - 1, g._size) + 1
-            g.play(x, y)
+        g.play_action = (action::Base.AbstractCartesianIndex) -> begin
+            # x = div(action - 1, g._size) + 1
+            # y = mod(action - 1, g._size) + 1
+            # g.play(x, y)
+            g.play(action[1], action[2])
         end
 
         """action string"""
         g.str_action = (action::Int) -> begin
-            return "$(mod(action-1,size)+'A')$(div(action-1,size)+1)"
+            return "$(div(action-1,size)+'A')$(mod(action-1,size)+1)"
         end
 
         """Check if the game is over."""

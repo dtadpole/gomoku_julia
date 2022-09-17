@@ -59,12 +59,12 @@ mutable struct MctsNode
     _cpuct::Float32
     _gamma::Float32
     _parent::Union{MctsNode,Nothing}
-    _children::Union{Array{Union{MctsNode,Nothing},1},Nothing}
+    _children::Union{Matrix{Union{MctsNode,Nothing}},Nothing}
     _N::Int
     _P::Float32
     _Q::Float32
     # _U::Float32
-    _Pi_V::Union{Tuple{Vector{Float32},Float32},Nothing}
+    _Pi_V::Union{Tuple{Matrix{Float32},Float32},Nothing}
 
     # functions
     size::Function
@@ -100,13 +100,16 @@ mutable struct MctsNode
         function _calc_Pi_V()
             if node._Pi_V === nothing
                 state = node._game.state()
-                state, r = random_transform(state) # random transform
+                # state, r = random_transform(state) # random transform
                 if args["model_cuda"] >= 0
                     state = state |> gpu
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
-                pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
-                node._Pi_V = (reshape(pi, node.size()^2), node._game.turn() * Array(v)[1])
+                # pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
+                # node._Pi_V = (reshape(pi, node.size()^2), node._game.turn() * Array(v)[1])
+                pi = reshape(pi, node.size(), node.size())
+                v = Array(v)[1]
+                node._Pi_V = (pi, v)
             end
             return node._Pi_V
         end
@@ -117,13 +120,13 @@ mutable struct MctsNode
                 error("Cannot expand children - game is over")
             end
             pi, _ = _calc_Pi_V()
-            Pa = pi .* node._game.available_actions()
-            node._children = Array{Union{MctsNode,Nothing},1}(nothing, node.size()^2)
-            for i in 1:node.size()^2
-                if Pa[i] > 0.0
+            # Pa = pi .* node._game.available_actions()
+            node._children = Array{Union{MctsNode,Nothing},2}(nothing, node.size(), node.size())
+            for i = 1:node.size(), j = 1:node.size()
+                if pi[i, j] > 0.0
                     game = node._game.clone()
-                    game.play_action(i)
-                    node._children[i] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=Pa[i])
+                    game.play_action(CartesianIndex(i, j))
+                    node._children[i, j] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=pi[i, j])
                 end
             end
         end
@@ -151,18 +154,18 @@ mutable struct MctsNode
                 if node._children === nothing
                     node.expandChildren()
                 end
-                values = [node._children[i] === nothing ? -Inf : node._children[i].nodeValue() for i in 1:node.size()^2]
-                i = argmax(values)
-                node._children[i].travelBranch(depth - 1)
+                values = [node._children[i, j] === nothing ? -Inf : node._children[i, j].nodeValue() for i in 1:node.size(), j in 1:node.size()]
+                index = argmax(values)
+                node._children[index].travelBranch(depth - 1)
             end
         end
 
         """Root N distribution"""
         node.rootN = () -> begin
-            pi = zeros(Int, node.size()^2)
-            for i in 1:node.size()^2
-                if node._children[i] !== nothing
-                    pi[i] = node._children[i]._N
+            pi = zeros(Int, node.size(), node.size())
+            for i in 1:node.size(), j in 1:node.size()
+                if node._children[i, j] !== nothing
+                    pi[i, j] = node._children[i, j]._N
                 end
             end
             return pi
@@ -170,8 +173,8 @@ mutable struct MctsNode
 
         """Root Q"""
         node.rootQ = () -> begin
-            return node._game.turn() * node._Q
-            # return node._Q
+            # return node._game.turn() * node._Q
+            return node._Q
         end
 
         return node
@@ -237,21 +240,22 @@ function mcts_play_game(model_1::Model, model_2::Model)
         push!(experiences, (game.state(), pi, v))
 
         # play action
-        pa = reshape(pi, SIZE * SIZE)
         if TEMPERATURE > 1e-4
-            pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
-            # pa = softmax(1.0 / TEMPERATURE * log.(pa .+ 1e-8)) .* game.available_actions()
+            # pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
+            pa = reshape(pi, SIZE * SIZE)
+            pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE)
             action = sample(1:SIZE^2, ProbabilityWeights(pa))
+            action = CartesianIndex(mod(action - 1, SIZE) + 1, div(action - 1, SIZE) + 1)
         else
-            pa = pa .* game.available_actions()
-            action = argmax(pa)
+            # pa = pa .* game.available_actions()
+            action = argmax(pi)
         end
 
         game = game.clone()
         game.play_action(action)
         if args["game_display"]
             duration = round(time() - start_time, digits=1)
-            @info "$(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s] "
+            @info "$(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(reshape(node.rootN(), node.size()^2), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s] "
             # display
             game.display()
         end
