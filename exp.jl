@@ -148,11 +148,11 @@ mutable struct Experiences
                 s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
                 pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
                 v = reshape(cat(v...; dims=2), (1, sample_size))
-                if args["model_cuda"] >= 0
-                    s = s |> gpu
-                    pi = pi |> gpu
-                    v = v |> gpu
-                end
+                # if args["model_cuda"] >= 0
+                #     s = s |> gpu
+                #     pi = pi |> gpu
+                #     v = v |> gpu
+                # end
                 return s, pi, v
             end
         end

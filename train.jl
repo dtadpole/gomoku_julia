@@ -153,6 +153,12 @@ mutable struct Train
                 pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
                 v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
+                if args["model_cuda"] >= 0
+                    state = state |> gpu
+                    pi = pi |> gpu
+                    v = v |> gpu
+                end
+
                 # convert from visit count to distribution
                 pa = softmax(log.(pi .+ 1e-8), dims=1)
 
