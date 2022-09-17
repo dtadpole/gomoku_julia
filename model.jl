@@ -107,7 +107,7 @@ mutable struct Model
                     x -> reshape(x, (div(channels, 2) * size * size, :)),
                     Dropout(0.5),
                     Dense(div(channels, 2) * size * size => size * size, elu),
-                    x -> reshape(x, (size, size, :)),
+                    x -> reshape(x, (size, size, :))
                     # x -> log.(x + 1e-8), # add log layer
                     # softmax # softmax layer applies to only dims=1
                 ),
@@ -130,7 +130,7 @@ mutable struct Model
         """Forward pass"""
         m.forward = (x) -> begin
             p, v = m._model(x)
-            pi = softmax(p, dims=[1, 2]) .* (1.0 .- abs.(sign.(x))) # mask out illegal moves
+            pi = softmax(p, dims=[1, 2]) .* reshape((1.0 .- abs.(sign.(x))), (m.size(), m.size(), :)) # mask out illegal moves
             return pi, v
         end
 

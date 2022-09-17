@@ -1,6 +1,7 @@
 include("./exp.jl")
 
-# using Unzip
+using Unzip
+# unzip(a) = map(x -> getfield.(a, x), fieldnames(eltype(a)))
 
 function save_optimizer(path::String, opt::Flux.Optimise.Optimiser)
     open(path, "w") do io
@@ -135,9 +136,6 @@ mutable struct Train
                 (states, pis, vs) = t._experiences.sampleExperience(id, BATCH_SIZE * BATCH_NUM)
             end
 
-            # keeps previous policy
-            prev_policy, _ = t._experiences.model(id).forward(states)
-
             # keeps a list of kl divergence
             kl_list = Vector{Float32}()
 
@@ -150,7 +148,7 @@ mutable struct Train
             for batch in 1:BATCH_NUM
 
                 state = states[:, :, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
-                pi = pis[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                pi = pis[:, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
                 v = vs[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
                 if args["model_cuda"] >= 0
@@ -158,6 +156,11 @@ mutable struct Train
                     pi = pi |> gpu
                     v = v |> gpu
                 end
+
+                @info "sizes" size(state) size(pi) size(v)
+
+                # calculate previous policy
+                prev_pi, _ = t._experiences.model(id).forward(state)
 
                 # convert from visit count to distribution
                 pa = softmax(log.(pi .+ 1e-8), dims=[1, 2])
@@ -175,6 +178,8 @@ mutable struct Train
                 # calculate new policy
                 new_loss, loss_pi, loss_v, loss_entropy, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
 
+                @info "new sizes" size(new_loss) size(loss_pi) size(loss_v) size(loss_entropy) size(new_pi) size(new_v)
+
                 # keep track of loss
                 push!(loss_list, new_loss |> cpu)
                 push!(loss_pi_list, loss_pi |> cpu)
@@ -182,10 +187,13 @@ mutable struct Train
                 push!(loss_entropy_list, loss_entropy |> cpu)
 
                 # extract prev policy
-                prev_pi = prev_policy[:, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
+                # prev_pi = prev_policy[:, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
                 # calculate KL divergence
-                kl = reshape(sum(prev_pi .* (log.(prev_pi) - log.(new_pi)), dims=1), BATCH_SIZE)
+                @info "prev and new pi" size(prev_pi) size(new_pi)
+                kl_sum = sum(prev_pi .* (log.(prev_pi) .- log.(new_pi)), dims=[1, 2])
+                @info "size_kl" size(kl_sum)
+                kl = reshape(kl_sum, BATCH_SIZE)
                 kl_mean = mean(kl)
 
                 # update global list

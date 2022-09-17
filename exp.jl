@@ -131,7 +131,7 @@ mutable struct Experiences
                 s, pi, v = unzip(shuffle(e._exp_list[id][1:sample_size]))
                 # reshape to tensor
                 s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
-                pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
+                pi = reshape(cat(pi...; dims=3), (e.size(), e.size(), sample_size))
                 v = reshape(cat(v...; dims=2), (1, sample_size))
                 if args["model_cuda"] >= 0
                     s = s |> gpu
@@ -146,7 +146,7 @@ mutable struct Experiences
                 s, pi, v = unzip(sample(e._exp_list[id], ProbabilityWeights(_WEIGHTS[1:min(length(e._exp_list[id]), args["exp_max"])]), sample_size, replace=false))
                 # reshape to tensor
                 s = reshape(cat(s...; dims=3), (e.size(), e.size(), 1, sample_size))
-                pi = reshape(cat(pi...; dims=3), (e.size() * e.size(), sample_size))
+                pi = reshape(cat(pi...; dims=3), (e.size(), e.size(), sample_size))
                 v = reshape(cat(v...; dims=2), (1, sample_size))
                 # if args["model_cuda"] >= 0
                 #     s = s |> gpu
