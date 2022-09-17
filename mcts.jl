@@ -145,7 +145,8 @@ mutable struct MctsNode
         """Travel branch"""
         node.travelBranch = (depth::Int = 1_000) -> begin
             if node._game.is_over()
-                node.updateBranch(-node._game.score())
+                # node.updateBranch(-node._game.score())
+                node.updateBranch(node._game.score() * node._game.turn())
             elseif depth <= 0
                 _, v = _calc_Pi_V()
                 node.updateBranch(v)
