@@ -243,7 +243,7 @@ function mcts_play_game(model_1::Model, model_2::Model)
         if TEMPERATURE > 1e-4
             # pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
             pa = softmax(log.(pi .+ 1e-8) / TEMPERATURE, dims=[1, 2])
-            action = sample(1:SIZE^2, ProbabilityWeights(reshape(pa, (SIZE^2,))))
+            action = sample(1:SIZE^2, ProbabilityWeights(reshape(pa, SIZE^2)))
             action = CartesianIndex(mod(action - 1, SIZE) + 1, div(action - 1, SIZE) + 1)
         else
             # pa = pa .* game.available_actions()

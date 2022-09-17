@@ -35,7 +35,7 @@ function model_step(game::Game, model::Model)
     pi = node.rootN
     if TEMPERATURE > 1e-4
         pa = softmax(log.(pi) / TEMPERATURE, dims=[1, 2])
-        action = sample(1:model.size()^2, ProbabilityWeights(reshape(pa, (model.size()^2,))))
+        action = sample(1:model.size()^2, ProbabilityWeights(reshape(pa, model.size()^2)))
         action = CartesianIndex(mod(action - 1, SIZE) + 1, div(action - 1, SIZE) + 1)
     else
         action = argmax(pi)
