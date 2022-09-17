@@ -203,7 +203,7 @@ function eval_run(eval_id::Int)
             end
         catch e
             @error "[$(eval_id)] Error" exception = (e, catch_backtrace())
-            sleep(1.4^(i - 1))
+            exit(1)
         finally
             @info repeat("-", 50)
             @info "[$(eval_id)] Tally [$(i)] : [$(args["player_1"]) : $(player_1_wins)] vs [$(args["player_2"]) : $(player_2_wins)] , [$(draws) draws]"
