@@ -106,7 +106,7 @@ mutable struct MctsNode
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
                 pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
-                node._Pi_V = (reshape(pi, node.size()^2), Array(v)[1] * sign(node._game.turn()))
+                node._Pi_V = (reshape(pi, node.size()^2), Array(v)[1] * node._game.turn())
             end
             return node._Pi_V
         end
@@ -129,7 +129,7 @@ mutable struct MctsNode
         end
 
         """Node Value : Q(S,a) + cpuct * P(S,a) * sqrt(sum(N(S,x) for x in siblings)) / (1 + N(S,a))"""
-        node.nodeValue = () -> sign(node._game.turn()) * node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
+        node.nodeValue = () -> node._game.turn() * node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
 
         """Update branch"""
         node.updateBranch = (v::Float32) -> begin
@@ -170,7 +170,7 @@ mutable struct MctsNode
 
         """Root Q"""
         node.rootQ = () -> begin
-            return sign(node._game.turn()) * node._Q
+            return node._game.turn() * node._Q
             # return node._Q
         end
 

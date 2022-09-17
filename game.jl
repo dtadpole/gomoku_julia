@@ -37,7 +37,7 @@ mutable struct Game
         g.state = () -> g._board
 
         """Turn"""
-        g.turn = () -> g._turn
+        g.turn = () -> sign(g._turn)
 
         """Available moves"""
         g.available_moves = () -> [(i, j) for i in 1:g._size for j in 1:g._size if g._board[i, j] == 0.0]
