@@ -316,7 +316,7 @@ mutable struct Train
 
                             if args["exp_sample_sequential"]
                                 # trip experiences by BATCH_SIZE * BATCH_NUM
-                                t._experiences.trimExperience(id, BATCH_SIZE * BATCH_NUM)
+                                t._experiences.trimExperience(id, trunc(Int, BATCH_SIZE * BATCH_NUM * args["train_trim_ratio"]))
                             end
 
                             # save trained model, optimizer, and experiences
