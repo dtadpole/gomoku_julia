@@ -100,12 +100,12 @@ mutable struct MctsNode
         function _calc_Pi_V()
             if node._Pi_V === nothing
                 state = node._game.state()
-                state, r = random_transform(state) # random transform
+                # state, r = random_transform(state) # random transform
                 if args["model_cuda"] >= 0
                     state = state |> gpu
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
-                pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
+                # pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
                 pi = reshape(pi, node.size(), node.size()) .* node._game.available_actions()
                 v = Array(v)[1] # * node._game.turn()
                 node._Pi_V = (pi, v)
@@ -130,7 +130,8 @@ mutable struct MctsNode
         end
 
         """Node Value : Q(S,a) + cpuct * P(S,a) * sqrt(sum(N(S,x) for x in siblings)) / (1 + N(S,a))"""
-        node.nodeValue = () -> node._game.turn() * node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
+        # node.nodeValue = () -> node._game.turn() * node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
+        node.nodeValue = () -> node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
 
         """Update branch"""
         node.updateBranch = (v::Float32) -> begin
