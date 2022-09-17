@@ -34,7 +34,7 @@ mutable struct Game
         g.size = () -> g._size
 
         """State"""
-        g.state = () -> g._board
+        g.state = () -> g._board .* g.turn()
 
         """Turn"""
         g.turn = () -> sign(g._turn)
