@@ -107,7 +107,7 @@ mutable struct MctsNode
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
                 # pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
                 # node._Pi_V = (reshape(pi, node.size()^2), node._game.turn() * Array(v)[1])
-                pi = reshape(pi, node.size(), node.size())
+                pi = reshape(pi, node.size(), node.size()) .* node._game.available_moves()
                 v = Array(v)[1]
                 node._Pi_V = (pi, v)
             end
@@ -161,7 +161,14 @@ mutable struct MctsNode
                     end
                 end
                 index = argmax(values)
-                node._children[index[1], index[2]].travelBranch(depth - 1)
+                # if values[index] == -Inf32
+                #     @info "Travel branch" depth index values
+                #     index = CartesianIndex(rand(1:node.size()), rand(1:node.size()))
+                #     game = node._game.clone()
+                #     game.play_action(index)
+                #     node._children[index] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=0.0)
+                # end
+                node._children[index].travelBranch(depth - 1)
             end
         end
 
@@ -247,7 +254,8 @@ function mcts_play_game(model_1::Model, model_2::Model)
         # play action
         if TEMPERATURE > 1e-4
             # pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
-            pa = softmax(log.(pi .+ 1e-8) / TEMPERATURE, dims=[1, 2])
+            # pa = softmax(log.(pi .+ 1e-8) / TEMPERATURE, dims=[1, 2])
+            pa = softmax(log.(pi) / TEMPERATURE, dims=[1, 2])
             action = sample(1:SIZE^2, ProbabilityWeights(reshape(pa, SIZE^2)))
             action = CartesianIndex(mod(action - 1, SIZE) + 1, div(action - 1, SIZE) + 1)
         else

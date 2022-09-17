@@ -4,7 +4,6 @@ using Flux
 using CUDA
 using JLD
 using Serialization
-using StatsBase
 using HTTP
 
 global URL_BASE = URL_BASE = "http://$(args["exp_server"]):$(args["exp_port"])"
@@ -130,7 +129,8 @@ mutable struct Model
         """Forward pass"""
         m.forward = (x) -> begin
             p, v = m._model(x)
-            pi = softmax(p, dims=[1, 2]) .* reshape((1.0 .- abs.(sign.(x))), (m.size(), m.size(), :)) # mask out illegal moves
+            # pi = softmax(p, dims=[1, 2]) .* reshape(abs.(abs.(x) .- 1.0), (m.size(), m.size(), :)) # mask out illegal moves
+            pi = softmax(p, dims=[1, 2])
             return pi, v
         end
 

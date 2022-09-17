@@ -1,6 +1,7 @@
 include("./args.jl")
 
 using Printf
+using StatsBase
 
 mutable struct Game
 
@@ -40,7 +41,7 @@ mutable struct Game
         g.turn = () -> sign(g._turn)
 
         """Available moves"""
-        g.available_moves = () -> [(i, j) for i in 1:g._size for j in 1:g._size if g._board[i, j] == 0.0]
+        g.available_moves = () -> abs.(abs.(g.state()) .- 1.0)
 
         """Available actions"""
         g.available_actions = () -> begin
@@ -97,7 +98,7 @@ mutable struct Game
             end
 
             # check if there are any available moves
-            if length(g.available_moves()) == 0
+            if sum(g.available_moves()) == 0.0
                 g._done = true
                 return true
             end
@@ -223,10 +224,11 @@ end
 
 """Play out a game and return the winner."""
 function _random_playout(g::Game)
+    SIZE = g.size()
     while !g.is_over()
-        moves = g.available_moves()
-        move = moves[rand(1:length(moves))]
-        g.play(move...)
+        moves = reshape(g.available_moves(), SIZE^2)
+        move = sample([(i, j) for i in 1:SIZE, j in 1:SIZE], ProbabilityWeights(moves))
+        g.play(move[1], move[2])
         if args["game_display"]
             g.display()
             sleep(0.2)
