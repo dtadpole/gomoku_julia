@@ -5,3 +5,4 @@ HTTP
 JLD
 Serialization
 StatsBase
+Unzip
