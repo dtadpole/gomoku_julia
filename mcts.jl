@@ -170,8 +170,8 @@ mutable struct MctsNode
 
         """Root Q"""
         node.rootQ = () -> begin
-            # return sign(node._game.turn()) * node._Q
-            return node._Q
+            return sign(node._game.turn()) * node._Q
+            # return node._Q
         end
 
         return node
