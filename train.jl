@@ -277,7 +277,7 @@ mutable struct Train
 
                     # t._experiences.playGame() # do not play game in train server.  let the inference servers play games
 
-                    if (t._experiences.trainedBatch(id) + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
+                    if (t._experiences.trainedBatch(id) * args["train_trim_ratio"] + BATCH_NUM * TRAIN_EPOCHS) * BATCH_SIZE < t._experiences.totalCount(id) * TRAIN_EPOCHS
 
                         sleep_count_ema = 0.9 * sleep_count_ema + 0.1 * sleep_count
                         sleep_time = max(1.0, min(120.0, (sleep_time * sleep_count_ema) / 5.0))
