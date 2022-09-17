@@ -79,7 +79,7 @@ function parse_commandline()
         "--train_trim_ratio"
         help = "train trim ratio"
         arg_type = Float32
-        default = Float32(0.4)
+        default = Float32(0.3)
 
         "--train_kl_target"
         help = "train kl target"
