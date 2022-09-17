@@ -42,6 +42,8 @@ function infer_playouts()
 
             @error "Error" exception = (e, catch_backtrace())
 
+            exit(1)
+
         finally
 
             # GC & reclaim CUDA memory
