@@ -2,5 +2,5 @@
 
 while true ; do
     julia ./infer.jl "$@"
-    sleep 1
+    sleep 3
 done
