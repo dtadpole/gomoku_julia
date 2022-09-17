@@ -195,8 +195,8 @@ function _play_model(model::Model)
         end
         # get action
         pi, _ = model.forward(reshape(state, (model.size(), model.size(), 1, 1)))
-        available_actions = game.available_actions()
-        distribution = reshape(Array(pi), model.size()^2) .* available_actions
+        pi = pi .* game.available_actions()
+        distribution = reshape(Array(pi), model.size()^2)
         action = sample(1:model.size()^2, ProbabilityWeights(distribution))
         action = CartesianIndex(mod(action - 1, model.size()) + 1, div(action - 1, model.size()) + 1)
         # play action

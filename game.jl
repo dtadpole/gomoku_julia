@@ -16,7 +16,6 @@ mutable struct Game
     size::Function
     state::Function
     turn::Function
-    available_moves::Function
     available_actions::Function
     play::Function
     play_action::Function
@@ -40,21 +39,8 @@ mutable struct Game
         """Turn"""
         g.turn = () -> sign(g._turn)
 
-        """Available moves"""
-        g.available_moves = () -> abs.(abs.(g.state()) .- 1.0)
-
         """Available actions"""
-        g.available_actions = () -> begin
-            actions = zeros(Float32, g._size * g._size)
-            for i in 1:g._size
-                for j in 1:g._size
-                    if g._board[i, j] == 0.0
-                        actions[(i-1)*g._size+j] = 1.0
-                    end
-                end
-            end
-            return actions
-        end
+        g.available_actions = () -> abs.(abs.(g.state()) .- 1.0)
 
         """Play a move at (x, y)"""
         g.play = (x::Int, y::Int) -> begin
@@ -74,9 +60,6 @@ mutable struct Game
 
         """Play an action"""
         g.play_action = (action::Base.AbstractCartesianIndex) -> begin
-            # x = div(action - 1, g._size) + 1
-            # y = mod(action - 1, g._size) + 1
-            # g.play(x, y)
             g.play(action[1], action[2])
         end
 
@@ -98,7 +81,7 @@ mutable struct Game
             end
 
             # check if there are any available moves
-            if sum(g.available_moves()) == 0.0
+            if sum(g.available_actions()) == 0.0
                 g._done = true
                 return true
             end
@@ -226,7 +209,7 @@ end
 function _random_playout(g::Game)
     SIZE = g.size()
     while !g.is_over()
-        moves = reshape(g.available_moves(), SIZE^2)
+        moves = reshape(g.available_actions(), SIZE^2)
         move = sample([(i, j) for i in 1:SIZE, j in 1:SIZE], ProbabilityWeights(moves))
         g.play(move[1], move[2])
         if args["game_display"]

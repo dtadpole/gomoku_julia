@@ -106,9 +106,8 @@ mutable struct MctsNode
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
                 pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
-                # node._Pi_V = (reshape(pi, node.size()^2), node._game.turn() * Array(v)[1])
-                pi = reshape(pi, node.size(), node.size()) .* node._game.available_moves()
-                v = Array(v)[1]
+                pi = reshape(pi, node.size(), node.size()) .* node._game.available_actions()
+                v = Array(v)[1] # * node._game.turn()
                 node._Pi_V = (pi, v)
             end
             return node._Pi_V
@@ -120,7 +119,6 @@ mutable struct MctsNode
                 error("Cannot expand children - game is over")
             end
             pi, _ = _calc_Pi_V()
-            # Pa = pi .* node._game.available_actions()
             node._children = Array{Union{MctsNode,Nothing},2}(nothing, node.size(), node.size())
             for i = 1:node.size(), j = 1:node.size()
                 if pi[i, j] > 0.0
@@ -185,8 +183,7 @@ mutable struct MctsNode
 
         """Root Q"""
         node.rootQ = () -> begin
-            # return node._game.turn() * node._Q
-            return node._Q
+            return node._Q # * node._game.turn()
         end
 
         return node
@@ -253,13 +250,11 @@ function mcts_play_game(model_1::Model, model_2::Model)
 
         # play action
         if TEMPERATURE > 1e-4
-            # pa = softmax(log.(pa .+ 1e-8) / TEMPERATURE) .* game.available_actions()
             # pa = softmax(log.(pi .+ 1e-8) / TEMPERATURE, dims=[1, 2])
             pa = softmax(log.(pi) / TEMPERATURE, dims=[1, 2])
             action = sample(1:SIZE^2, ProbabilityWeights(reshape(pa, SIZE^2)))
             action = CartesianIndex(mod(action - 1, SIZE) + 1, div(action - 1, SIZE) + 1)
         else
-            # pa = pa .* game.available_actions()
             action = argmax(pi)
         end
 
