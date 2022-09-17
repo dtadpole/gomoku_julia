@@ -14,6 +14,8 @@ function model_step(game::Game, model::Model)
 
     TEMPERATURE = args["mcts_temperature"]
 
+    SIZE = game.size()
+
     if game.is_over()
         @error "Game is over"
         return nothing
@@ -32,7 +34,7 @@ function model_step(game::Game, model::Model)
     post_N = node._N
 
     # policy distribution
-    pi = node.rootN
+    pi = node.rootN()
     if TEMPERATURE > 1e-4
         pa = softmax(log.(pi) / TEMPERATURE, dims=[1, 2])
         action = sample(1:model.size()^2, ProbabilityWeights(reshape(pa, model.size()^2)))
@@ -45,7 +47,8 @@ function model_step(game::Game, model::Model)
     game.play_action(action)
     if args["game_display"]
         duration = round(time() - start_time, digits=1)
-        @info "$(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s]"
+        # @info "$(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(node.rootN(), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s]"
+        @info "$(join(["($(game.str_action(a)), $(n))" for (a, n) in maxk(reshape(node.rootN(), SIZE^2), 5)], ", ")) [$(prior_N) -> $(post_N) : $(duration)s] "
         # display
         game.display()
     end
