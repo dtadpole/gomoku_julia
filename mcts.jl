@@ -106,7 +106,7 @@ mutable struct MctsNode
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
                 pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
-                node._Pi_V = (reshape(pi, node.size()^2), Array(v)[1])
+                node._Pi_V = (reshape(pi, node.size()^2), Array(v)[1] * sign(node._game.turn()))
             end
             return node._Pi_V
         end
