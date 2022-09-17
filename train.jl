@@ -157,7 +157,7 @@ mutable struct Train
                     v = v |> gpu
                 end
 
-                @info "sizes" size(state) size(pi) size(v)
+                # @info "sizes" size(state) size(pi) size(v)
 
                 # calculate previous policy
                 prev_pi, _ = t._experiences.model(id).forward(state)
@@ -178,7 +178,7 @@ mutable struct Train
                 # calculate new policy
                 new_loss, loss_pi, loss_v, loss_entropy, new_pi, new_v = t._experiences.model(id).loss(state, pa, v)
 
-                @info "new sizes" size(new_loss) size(loss_pi) size(loss_v) size(loss_entropy) size(new_pi) size(new_v)
+                # @info "new sizes" size(new_loss) size(new_pi) size(new_v)
 
                 # keep track of loss
                 push!(loss_list, new_loss |> cpu)
@@ -190,9 +190,7 @@ mutable struct Train
                 # prev_pi = prev_policy[:, :, (batch-1)*BATCH_SIZE+1:batch*BATCH_SIZE]
 
                 # calculate KL divergence
-                @info "prev and new pi" size(prev_pi) size(new_pi)
                 kl_sum = sum(prev_pi .* (log.(prev_pi) .- log.(new_pi)), dims=[1, 2])
-                @info "size_kl" size(kl_sum)
                 kl = reshape(kl_sum, BATCH_SIZE)
                 kl_mean = mean(kl)
 
