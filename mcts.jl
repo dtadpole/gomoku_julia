@@ -100,12 +100,12 @@ mutable struct MctsNode
         function _calc_Pi_V()
             if node._Pi_V === nothing
                 state = node._game.state()
-                # state, r = random_transform(state) # random transform
+                state, r = random_transform(state) # random transform
                 if args["model_cuda"] >= 0
                     state = state |> gpu
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
-                # pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
+                pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
                 pi = reshape(pi, node.size(), node.size()) .* node._game.available_actions()
                 v = Array(v)[1] # * node._game.turn()
                 node._Pi_V = (pi, v)
@@ -160,13 +160,6 @@ mutable struct MctsNode
                     end
                 end
                 index = argmax(values)
-                # if values[index] == -Inf32
-                #     @info "Travel branch" depth index values
-                #     index = CartesianIndex(rand(1:node.size()), rand(1:node.size()))
-                #     game = node._game.clone()
-                #     game.play_action(index)
-                #     node._children[index] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=0.0)
-                # end
                 node._children[index].travelBranch(depth - 1)
             end
         end
