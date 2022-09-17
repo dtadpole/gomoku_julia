@@ -154,9 +154,14 @@ mutable struct MctsNode
                 if node._children === nothing
                     node.expandChildren()
                 end
-                values = [node._children[i, j] === nothing ? -Inf : node._children[i, j].nodeValue() for i in 1:node.size(), j in 1:node.size()]
+                values = -Inf32 .* ones(node.size(), node.size())
+                for i = 1:node.size(), j = 1:node.size()
+                    if node._children[i, j] !== nothing
+                        values[i, j] = node._children[i, j].nodeValue()
+                    end
+                end
                 index = argmax(values)
-                node._children[index].travelBranch(depth - 1)
+                node._children[index[1], index[2]].travelBranch(depth - 1)
             end
         end
 
