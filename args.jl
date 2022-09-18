@@ -44,7 +44,7 @@ function parse_commandline()
         "--mcts_cpuct"
         help = "mcts cpuct"
         arg_type = Float32
-        default = Float32(5.0)
+        default = Float32(3.0)
 
         "--mcts_depth"
         help = "mcts depth"
@@ -60,6 +60,16 @@ function parse_commandline()
         help = "mcts temperature"
         arg_type = Float32
         default = Float32(1.0)
+
+        "--mcts_noise_alpha"
+        help = "mcts noise dirichlet alpha"
+        arg_type = Float32
+        default = Float32(0.1) # AlphaZero: 0.03
+
+        "--mcts_noise_epsilon"
+        help = "mcts noise epsilon"
+        arg_type = Float32
+        default = Float32(0.25) # AlphaZero: 0.25
 
         "--train_batch_size"
         help = "train batch size"

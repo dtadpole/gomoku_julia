@@ -1,5 +1,6 @@
 ArgParse
 CUDA
+Distributions
 Flux
 HTTP
 JLD

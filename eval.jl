@@ -24,7 +24,7 @@ function model_step(game::Game, model::Model)
     start_time = time()
 
     # create mcts node
-    node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+    node = MctsNode(game, model; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"]) # no noise during evaluation
 
     # mcts play
     prior_N = node._N

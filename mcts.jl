@@ -1,5 +1,7 @@
 include("./model.jl")
 
+using Distributions
+
 function rotate90(a::Matrix)
     reverse(transpose(a), dims=2)
 end
@@ -65,6 +67,8 @@ mutable struct MctsNode
     _Q::Float32
     # _U::Float32
     _Pi_V::Union{Tuple{Matrix{Float32},Float32},Nothing}
+    _noise_epsilon::Float32
+    _dirichlet::Union{Dirichlet,Nothing}
 
     # functions
     size::Function
@@ -79,9 +83,9 @@ mutable struct MctsNode
     rootQ::Function
 
     # constructor
-    function MctsNode(game::Game, model::Model; cpuct=3.0, gamma=0.98, parent=nothing, P=0.0)
+    function MctsNode(game::Game, model::Model; cpuct=3.0, gamma=0.98, parent=nothing, P=0.0, noise_epsilon=0.25, dirichlet=nothing)
 
-        node = new(game, model, cpuct, gamma, parent, nothing, 0, P, 0.0, nothing)
+        node = new(game, model, cpuct, gamma, parent, nothing, 0, P, 0.0, nothing, noise_epsilon, dirichlet)
 
         """Size"""
         node.size = () -> node._game.size()
@@ -106,7 +110,11 @@ mutable struct MctsNode
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
                 pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
-                pi = reshape(pi, node.size(), node.size()) .* node._game.available_actions()
+                if node._noise_epsilon > 0.0 && node._dirichlet !== nothing
+                    noise = reshape(rand(node._dirichlet), node.size(), node.size())
+                    pi = pi .* (1 - node._noise_epsilon) .+ noise .* node._noise_epsilon
+                end
+                pi = pi .* node._game.available_actions()
                 v = Array(v)[1] # * node._game.turn()
                 node._Pi_V = (pi, v)
             end
@@ -124,7 +132,7 @@ mutable struct MctsNode
                 if pi[i, j] > 0.0
                     game = node._game.clone()
                     game.play_action(CartesianIndex(i, j))
-                    node._children[i, j] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=pi[i, j])
+                    node._children[i, j] = MctsNode(game, node._model; cpuct=node._cpuct, gamma=node._gamma, parent=node, P=pi[i, j], noise_epsilon=node._noise_epsilon, dirichlet=node._dirichlet)
                 end
             end
         end
@@ -203,6 +211,8 @@ function mcts_play_game(model_1::Model, model_2::Model)
 
     TEMPERATURE = args["mcts_temperature"]
 
+    dirichlet = Dirichlet(SIZE^2, args["mcts_noise_alpha"]) # create dirichlet distribution for noise
+
     experiences = Array{Tuple{Array{Float32,2},Array{Float32,2},Float32},1}()
 
     # initialize game with random turn
@@ -210,8 +220,8 @@ function mcts_play_game(model_1::Model, model_2::Model)
     game = Game(SIZE, turn=game_init_turn)
 
     # create mcts node
-    node_1 = MctsNode(game, model_1; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
-    node_2 = MctsNode(game, model_2; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+    node_1 = MctsNode(game, model_1; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"], noise_epsilon=args["mcts_noise_epsilon"], dirichlet=dirichlet)
+    node_2 = MctsNode(game, model_2; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"], noise_epsilon=args["mcts_noise_epsilon"], dirichlet=dirichlet)
 
     # choose which node to travel
     if game.turn() > 0
@@ -272,7 +282,7 @@ function mcts_play_game(model_1::Model, model_2::Model)
             node_opposite = node_opposite._children[action]
             node_opposite.clearParent()
         else
-            node_opposite = MctsNode(game, model_opposite; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"])
+            node_opposite = MctsNode(game, model_opposite; cpuct=args["mcts_cpuct"], gamma=args["mcts_gamma"], noise_epsilon=args["mcts_noise_epsilon"], dirichlet=dirichlet)
         end
 
         # swap node and node_opposite
