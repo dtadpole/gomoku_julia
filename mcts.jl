@@ -2,6 +2,11 @@ include("./model.jl")
 
 using Distributions
 
+function maxk(a, k)
+    b = partialsortperm(a, 1:k, rev=true)
+    return collect(zip(b, a[b]))
+end
+
 function rotate90(a::Matrix)
     reverse(transpose(a), dims=2)
 end
@@ -198,11 +203,6 @@ mutable struct MctsNode
 
     end
 
-end
-
-function maxk(a, k)
-    b = partialsortperm(a, 1:k, rev=true)
-    return collect(zip(b, a[b]))
 end
 
 function mcts_play_game(model_1::Model, model_2::Model)
