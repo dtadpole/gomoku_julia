@@ -77,6 +77,7 @@ mutable struct MctsNode
     children::Function
     expandChildren::Function
     nodeValue::Function
+    childrenValues::Function
     updateBranch::Function
     travelBranch::Function
     rootN::Function
@@ -110,10 +111,10 @@ mutable struct MctsNode
                 end
                 pi, v = node._model.forward(reshape(state, (node.size(), node.size(), 1, 1)))
                 pi = revert_transform(reshape(Array(pi), (node.size(), node.size())), r) # revert transform
-                if node._noise_epsilon > 0.0 && node._dirichlet !== nothing
-                    noise = reshape(rand(node._dirichlet), node.size(), node.size())
-                    pi = pi .* (1 - node._noise_epsilon) .+ noise .* node._noise_epsilon
-                end
+                # if node._noise_epsilon > 0.0 && node._dirichlet !== nothing
+                #     noise = reshape(rand(node._dirichlet), node.size(), node.size())
+                #     pi = pi .* (1 - node._noise_epsilon) .+ noise .* node._noise_epsilon
+                # end
                 pi = pi .* node._game.available_actions()
                 v = Array(v)[1] # * node._game.turn()
                 node._Pi_V = (pi, v)
@@ -141,6 +142,21 @@ mutable struct MctsNode
         # node.nodeValue = () -> node._game.turn() * node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
         node.nodeValue = () -> node._Q + node._cpuct * node._P * sqrt(node._parent._N) / (1 + node._N)
 
+        """Children Node Value : Q(S,a) + cpuct * (P(S,a) + NOISE) * sqrt(sum(N(S,x) for x in siblings)) / (1 + N(S,a))"""
+        node.childrenValues = () -> begin
+            if node._children === nothing
+                error("Cannot get children values - children not expanded")
+            end
+            values = fill(-Inf32, node.size(), node.size())
+            dirichlet = node._dirichlet === nothing ? fill(0.0f0, node.size(), node.size()) : reshape(rand(node._dirichlet), node.size(), node.size())
+            for i in 1:node.size(), j in 1:node.size()
+                if node._children[i, j] !== nothing
+                    values[i, j] = node._children[i, j]._Q + node._cpuct * (node._children[i, j]._P * (1 - node._noise_epsilon) + dirichlet[i, j] * node._noise_epsilon) * sqrt(node._N) / (1 + node._children[i, j]._N)
+                end
+            end
+            return values
+        end
+
         """Update branch"""
         node.updateBranch = (v::Float32) -> begin
             node._Q = (node._Q * node._N + v) / (node._N + 1)
@@ -153,7 +169,6 @@ mutable struct MctsNode
         """Travel branch"""
         node.travelBranch = (depth::Int = 1_000) -> begin
             if node._game.is_over()
-                # node.updateBranch(-node._game.score())
                 # node.updateBranch(-node._game.score() * node._game.turn())
                 node.updateBranch(abs(node._game.score()))
             elseif depth <= 0
@@ -163,12 +178,7 @@ mutable struct MctsNode
                 if node._children === nothing
                     node.expandChildren()
                 end
-                values = -Inf32 .* ones(node.size(), node.size())
-                for i = 1:node.size(), j = 1:node.size()
-                    if node._children[i, j] !== nothing
-                        values[i, j] = node._children[i, j].nodeValue()
-                    end
-                end
+                values = node.childrenValues()
                 index = argmax(values)
                 node._children[index].travelBranch(depth - 1)
             end
